@@ -1,0 +1,21 @@
+{
+  "name": "kintsugi-mintooor",
+  "version": "1.0.0",
+  "description": "Self-minting script for Kintsugi Vaults",
+  "main": "index.js",
+  "scripts": {
+    "self-mint": "npx ts-node scripts/mint.ts"
+  },
+  "author": "timbotronic",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/node": "^17.0.31",
+    "dotenv": "^16.0.0",
+    "prettier": "^2.6.2",
+    "ts-node": "^10.7.0",
+    "typescript": "^4.6.4"
+  },
+  "dependencies": {
+    "@polkadot/api": "^8.3.1"
+  }
+}
