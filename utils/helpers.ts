@@ -1,6 +1,5 @@
 import 'dotenv/config'
-import { ApiPromise, WsProvider } from '@polkadot/api'
-import { Keyring } from '@polkadot/api'
+import { ApiPromise, WsProvider, Keyring } from '@polkadot/api'
 
 export const setup = async () => {
   const tokenPair = { collateral: { Token: 'KSM' }, wrapped: { Token: 'KBTC' } }
@@ -14,30 +13,39 @@ export const setup = async () => {
   const keyring = new Keyring({ type: 'sr25519' })
   const signer = keyring.addFromMnemonic(process.env.SEED_PHRASE as string)
   const address = keyring.encodeAddress(signer.publicKey, ss58Prefix as number)
-
   const blob = api.consts.system.version.toJSON() as any
-  const vaultInfo = (
-    await api.query.vaultRegistry.vaults({
-      accountId: address,
-      currencies: tokenPair,
-    })
-  ).toJSON() as any
 
-  if ((await vaultInfo) === null) {
-    console.error(`No vault details found for ${address}, exitting.`)
-    throw new Error('No vault details found.')
+  const getVaultInfo = async () => {
+    const resp = (await api.query.vaultRegistry.vaults({ accountId: address, currencies: tokenPair })).toJSON()
+
+    if (resp === null) {
+      console.error(`No vault details found for ${address}, exitting.`)
+      throw new Error('No vault details found.')
+    }
+    return resp
   }
 
-  const active = (await vaultInfo.status.active) ? true : false
-  const unbanned = (await vaultInfo.bannedUntil) === null ? true : false
+  const active = ((await getVaultInfo()) as any).status.active ? true : false
+  const unbanned = ((await getVaultInfo()) as any).bannedUntil === null ? true : false
+
+  const getToBeIssued = async () => {
+    const resp = Number(((await getVaultInfo()) as any).toBeIssuedTokens) / 10 ** 8
+
+    return resp.toFixed(5)
+  }
 
   const getCollateral = async () => {
     const resp = ((await api.query.tokens.accounts(address, { Token: 'KSM' })) as any).reserved
     return (Number(await resp) / 10 ** 12).toFixed(2)
   }
 
-  const getIssued = () => {
-    return (Number(vaultInfo.issuedTokens) / 10 ** 8).toFixed(5)
+  const getIssued = async () => {
+    return (Number(((await getVaultInfo()) as any).issuedTokens) / 10 ** 8).toFixed(5)
+  }
+
+  const getKintFree = async () => {
+    const resp = Number(((await api.query.tokens.accounts(address, { Token: 'KINT' })) as any).free) / 10 ** 12
+    return resp.toFixed(2)
   }
 
   const getPrice = async () => {
@@ -50,7 +58,7 @@ export const setup = async () => {
 
   const getRatio = async () => {
     const price = await getPrice()
-    const issuedValue = Number(price) * Number(getIssued())
+    const issuedValue = Number(price) * Number(await getIssued())
     const ratio = Number(await getCollateral()) / issuedValue
 
     return (ratio * 100).toFixed(2)
@@ -59,7 +67,7 @@ export const setup = async () => {
   const getMintCapacity = async (desiredRatio: number = 261) => {
     const collat = Number(await getCollateral())
     const price = Number(await getPrice())
-    const issued = Number(getIssued())
+    const issued = Number(await getIssued())
     const remaining = collat / (desiredRatio / 100) / price - issued
 
     return remaining.toFixed(5)
@@ -68,9 +76,19 @@ export const setup = async () => {
   const submitIssueRequest = async () => {
     if (!(Number(await getMintCapacity()) > 0.0001)) {
       console.error('Mint capacity is below minimum threshold. Aborting')
-      return
+      throw new Error('Remaining capacity too low')
     }
-    const amount = BigInt(Number(await getMintCapacity()) * 10 ** 8)
+
+    if (!(Number(await getKintFree()) > 0.01)) {
+      console.error('Not enough free KINT balance to submit issue request. Aborting')
+      throw new Error('Insufficient KINT')
+    }
+
+    if (Number(await getToBeIssued()) > 0.0001) {
+      console.error('This vault already have issue requests currently pending. Aborting')
+      throw new Error('Pending issue requests detected')
+    }
+    const amount = BigInt((Number(await getMintCapacity()) * 10 ** 8).toFixed(0))
 
     const calls = [
       api.tx.vaultRegistry.acceptNewIssues(tokenPair, true),
@@ -80,9 +98,11 @@ export const setup = async () => {
 
     let txn_hash
     const txn = api.tx.utility.batchAll(calls)
+    console.log('Txns built. Waiting...')
     let promise = new Promise(async (resolve, reject) => {
       const unsub = await txn.signAndSend(signer, { nonce: -1 }, (block) => {
-        if (block.status.isInBlock) resolve(block.status.asInBlock)
+        if (block.status.isInBlock) console.log(`Txns in unfinalized block: ${block.status.asInBlock} waiting...`)
+        if (block.status.isFinalized) resolve(block.status.asFinalized)
         if (block.status.isDropped) reject('Block has been dropped!')
       })
     })
@@ -106,8 +126,10 @@ export const setup = async () => {
     unbanned,
     getIssued,
     getCollateral,
+    getKintFree,
     getRatio,
     getMintCapacity,
+    getToBeIssued,
     submitIssueRequest,
   }
 }
