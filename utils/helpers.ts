@@ -73,7 +73,7 @@ export const setup = async () => {
     return remaining.toFixed(5)
   }
 
-  const submitIssueRequest = async () => {
+  const submitIssueRequest = async (collatPercent: number) => {
     if (!(Number(await getMintCapacity()) > 0.0001)) {
       console.error('Mint capacity is below minimum threshold. Aborting')
       throw new Error('Remaining capacity too low')
@@ -88,11 +88,11 @@ export const setup = async () => {
       console.error('This vault already have issue requests currently pending. Aborting')
       throw new Error('Pending issue requests detected')
     }
-    const amount = BigInt((Number(await getMintCapacity()) * 10 ** 8).toFixed(0))
+    const amount = BigInt((Number(await getMintCapacity(collatPercent)) * 10 ** 8).toFixed(0))
 
     const calls = [
       api.tx.vaultRegistry.acceptNewIssues(tokenPair, true),
-      api.tx.issue.requestIssue(amount, { address, tokenPair }),
+      api.tx.issue.requestIssue(amount, {accountId: address, currencies: tokenPair}),
       api.tx.vaultRegistry.acceptNewIssues(tokenPair, false),
     ]
 

@@ -19,25 +19,40 @@ async function main() {
   console.log('=============================')
 
   const rl = readline.createInterface({ input, output })
-  const answer = await rl.question('Would you like to proceed with submitting a self-mint issue request? (yes/no) ')
-  switch (answer) {
+  const answer1 = await rl.question('Would you like to proceed with submitting a self-mint issue request? (yes/no) ')
+  switch (answer1) {
     case 'yes':
-      const hash = await context.submitIssueRequest()
-      console.log(`Batched TXNs in finalized block: ${hash}`)
-      console.log('=============================')
-      console.log(`Issue Request submitted to vault ${context.address}`)
-      console.log(`Please now send ${await context.getToBeIssued()} kBTC`)
-      console.log(
-        'Pleaase visit web gui to see btc vault address to send to: https://kintsugi.interlay.io/transactions' 
-      )
       break
     case 'no':
       console.log('Goodbye. 👋')
+      return
       break
     default:
-      console.error(`⚠️ Invalid yes/no response entered: ${answer} \n Aborting.`)
+      console.error(`⚠️ Invalid yes/no response entered: ${answer1} \n Aborting.`)
       throw new Error('Invalid user answer')
   }
+
+  const answer2 = await rl.question('What collateral ratio would you like to issue upto? (min/default: 261) ')
+  let hash
+  if (answer2 == '') {
+    hash = await context.submitIssueRequest(261)
+  } else {
+    const percent = Number(answer2)
+    if (percent < 261) {
+      console.error(
+        `⚠️ Entered collateral percent is invalid or unsafe. Please try again with a number higher than 261`
+      )
+      throw new Error('Invalid user input')
+    }
+
+    hash = await context.submitIssueRequest(Number(answer2))
+  }
+  console.log(`Batched TXNs in finalized block: ${hash}`)
+  console.log('=============================')
+  console.log(`Issue Request submitted to vault ${context.address}`)
+  console.log(`Please now send ${await context.getToBeIssued()} kBTC`)
+  console.log('Please visit web gui to see btc vault address to send to: https://kintsugi.interlay.io/transactions')
+
   rl.close()
 }
 
