@@ -1,5 +1,6 @@
 import 'dotenv/config'
 import { ApiPromise, WsProvider, Keyring } from '@polkadot/api'
+import { payments } from 'bitcoinjs-lib'
 
 export const setup = async () => {
   const tokenPair = { collateral: { Token: 'KSM' }, wrapped: { Token: 'KBTC' } }
@@ -84,37 +85,52 @@ export const setup = async () => {
       throw new Error('Insufficient KINT')
     }
 
-    if (Number(await getToBeIssued()) > 0.0001) {
-      console.error('This vault already have issue requests currently pending. Aborting')
-      throw new Error('Pending issue requests detected')
-    }
+    // if (Number(await getToBeIssued()) > 0.0001) {
+    //   console.error('This vault already have issue requests currently pending. Aborting')
+    //   throw new Error('Pending issue requests detected')
+    // }
     const amount = BigInt((Number(await getMintCapacity(collatPercent)) * 10 ** 8).toFixed(0))
 
     const calls = [
       api.tx.vaultRegistry.acceptNewIssues(tokenPair, true),
-      api.tx.issue.requestIssue(amount, {accountId: address, currencies: tokenPair}),
+      api.tx.issue.requestIssue(amount, { accountId: address, currencies: tokenPair }),
       api.tx.vaultRegistry.acceptNewIssues(tokenPair, false),
     ]
 
-    let txn_hash
+    let details
     const txn = api.tx.utility.batchAll(calls)
     console.log('Txns built. Waiting...')
     let promise = new Promise(async (resolve, reject) => {
-      const unsub = await txn.signAndSend(signer, { nonce: -1 }, (block) => {
-        if (block.status.isInBlock) console.log(`Txns in unfinalized block: ${block.status.asInBlock} waiting...`)
-        if (block.status.isFinalized) resolve(block.status.asFinalized)
-        if (block.status.isDropped) reject('Block has been dropped!')
+      const unsub = await txn.signAndSend(signer, { nonce: -1 }, ({ events = [], status }) => {
+        if (status.isInBlock) console.log(`Txns in unfinalized block: ${status.asInBlock} waiting...`)
+        if (status.isDropped) reject('Block has been dropped!')
+        if (status.isFinalized) resolve({ events, hash: status.asFinalized })
       })
     })
 
     await promise
       .then((message) => {
-        txn_hash = message
+        details = message
       })
       .catch((message) => {
         throw new Error('Sending transaction failed.')
       })
-    return txn_hash
+    return details
+  }
+
+  const printStats = async () => {
+    console.log('=============================')
+    console.log(`⚡️ Connected to: ${blob.specName} v${blob.specVersion}`)
+    console.log(`🔑 Signer address: ${address}`)
+    console.log(`ℹ️  Current status: ${active ? 'OPEN 🔓' : 'CLOSED 🔒'}`)
+    console.log(`❓ Permission: ${unbanned ? 'OPEN ✅' : 'BANNED ❌'}`)
+    console.log(`🐤 Collateral: ${await getCollateral()} KSM`)
+    console.log(`🕰  Outstanding issue requests: ${await getToBeIssued()} kBTC`)
+    console.log(`💰 Issued: ${await getIssued()} kBTC`)
+    console.log(`🤌  Collateral Ratio: ${await getRatio()}%`)
+    console.log(`🌱 Mint Capacity Remaining: ${await getMintCapacity()} kBTC`)
+    console.log(`💸 KINT Balance Free: ${await getKintFree()} KINT`)
+    console.log('=============================')
   }
 
   return {
@@ -131,5 +147,28 @@ export const setup = async () => {
     getMintCapacity,
     getToBeIssued,
     submitIssueRequest,
+    printStats,
   }
+}
+
+export async function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms))
+}
+
+export const parseResponse = (resp) => {
+  let issueJson
+  let events = ''
+  resp.events.forEach(({ phase, event: { data, method, section } }) => {
+    events = events.concat(`\n\t${phase}: ${section}.${method}::${data}`)
+    if (section == 'issue' && method == 'RequestIssue') issueJson = data
+  })
+  events.concat('\n')
+  const vaultAddressJson = issueJson[6]
+  const amount = Number(issueJson[2]) + Number(issueJson[3])
+  const parsedAddress = JSON.parse(vaultAddressJson)
+  const hexHash = parsedAddress.p2wpkHv0
+  const hash = Buffer.from(hexHash.substring(2), 'hex')
+  const vaultBtcAddress = payments.p2wpkh({ hash }).address
+
+  return { vaultBtcAddress, amount, events }
 }

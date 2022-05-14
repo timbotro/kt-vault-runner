@@ -49,9 +49,6 @@ const unsub = await txn.signAndSend(signer, { nonce: -1 }, (block) => {
 ### Will this work for interlay vaults?
 No. The current version uses many hardcoded values specifically for Kintsugi only. This may change in the future
 
-### Why does this not show BTC addresses for successful issue requests?
-I am not an expert on BTC and for safety sake you must navigate to the official kintsugi web app to get the precise deposit details.
-
 ### Is there a read-only mode so that I don't have to reveal my seed phrase?
 I haven't built that feature yet. However you can quite easily see these stats on your corresponding vault dashboard
 

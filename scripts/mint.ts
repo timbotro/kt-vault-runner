@@ -1,22 +1,10 @@
-import { setup } from '../utils/helpers'
+import { setup, parseResponse } from '../utils/helpers'
 const readline = require('node:readline/promises')
 import { stdin as input, stdout as output } from 'node:process'
 
 async function main() {
   const context = await setup()
-
-  console.log('=============================')
-  console.log(`⚡️ Connected to: ${context.blob.specName} v${context.blob.specVersion}`)
-  console.log(`🔑 Signer address: ${context.address}`)
-  console.log(`ℹ️  Current status: ${context.active ? 'OPEN 🔓' : 'CLOSED 🔒'}`)
-  console.log(`❓ Permission: ${context.unbanned ? 'OPEN ✅' : 'BANNED ❌'}`)
-  console.log(`🐤 Collateral: ${await context.getCollateral()} KSM`)
-  console.log(`🕰  Outstanding issue requests: ${await context.getToBeIssued()} kBTC`)
-  console.log(`💰 Issued: ${await context.getIssued()} kBTC`)
-  console.log(`🤌  Collateral Ratio: ${await context.getRatio()}%`)
-  console.log(`🌱 Mint Capacity Remaining: ${await context.getMintCapacity()} kBTC`)
-  console.log(`💸 KINT Balance Free: ${await context.getKintFree()} KINT`)
-  console.log('=============================')
+  await context.printStats()
 
   const rl = readline.createInterface({ input, output })
   const answer1 = await rl.question('Would you like to proceed with submitting a self-mint issue request? (yes/no) ')
@@ -33,9 +21,9 @@ async function main() {
   }
 
   const answer2 = await rl.question('What collateral ratio would you like to issue upto? (min/default: 261) ')
-  let hash
+  let resp: any
   if (answer2 == '') {
-    hash = await context.submitIssueRequest(261)
+    resp = await context.submitIssueRequest(261)
   } else {
     const percent = Number(answer2)
     if (percent < 261) {
@@ -45,13 +33,17 @@ async function main() {
       throw new Error('Invalid user input')
     }
 
-    hash = await context.submitIssueRequest(Number(answer2))
+    resp = await context.submitIssueRequest(Number(answer2))
   }
-  console.log(`Batched TXNs in finalized block: ${hash}`)
+
+  console.log(`Batched TXNs in finalized block: ${resp.hash}`)
+  const { vaultBtcAddress, amount, events } = parseResponse(resp)
+  console.log('Events posted in transaction:' + events)
+
   console.log('=============================')
-  console.log(`Issue Request submitted to vault ${context.address}`)
-  console.log(`Please now send ${await context.getToBeIssued()} kBTC`)
-  console.log('Please visit web gui to see btc vault address to send to: https://kintsugi.interlay.io/transactions')
+  console.log(`📇 Issue Request submitted to vault ${context.address}`)
+  console.log(`🔏 Destination vault address: ${vaultBtcAddress}`)
+  console.log(`💳 Amount to send: ${(amount as number) / 10 ** 8} kBTC`)
 
   rl.close()
 }
