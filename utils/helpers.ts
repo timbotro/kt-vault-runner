@@ -28,6 +28,21 @@ export const setup = async () => {
 
   const { address, signer } = setupKeys(api)
 
+  const destinationKarura = {
+    V1: {
+      parents: 1,
+      interior: {
+        X2: [
+          {
+            Parachain: 2000,
+          },
+          {
+            AccountId32: { network: 'Any', id: signer.publicKey },
+          },
+        ],
+      },
+    },
+  }
   const blob = api.consts.system.version.toJSON() as any
   const ksmBtcVaultPrimitive = { accountId: address, currencies: tokenPair }
 
@@ -65,7 +80,7 @@ export const setup = async () => {
   }
 
   const getKsmFree = async (formatted: boolean = false) => {
-    const resp = await api.query.tokens.accounts(address, ksm) as any
+    const resp = (await api.query.tokens.accounts(address, ksm)) as any
     return resp.free
   }
 
@@ -98,6 +113,11 @@ export const setup = async () => {
 
     return (ratio * 100).toFixed(2)
   }
+  const bridgeToKarura = async (amount) => {
+    const txn = api.tx.xTokens.transfer(kint, amount, destinationKarura, 5000000000)
+    const details = await submitTx(txn, signer)
+    return details
+  }
 
   const getMintCapacity = async (desiredRatio: number = 261) => {
     const collat = Number(await getCollateral())
@@ -109,12 +129,16 @@ export const setup = async () => {
   }
 
   const claimRewards = async () => {
-    const txn = await api.tx.fee.withdrawRewards(ksmBtcVaultPrimitive, 0)
-    const claim = submitTx(txn, signer)
+    const txn = api.tx.fee.withdrawRewards(ksmBtcVaultPrimitive, 0)
+    const claim = await submitTx(txn, signer)
     return claim
   }
 
-  const depositCollateral = async () => {}
+  const depositCollateral = async (amount) => {
+    const txn = api.tx.vaultRegistry.depositCollateral(tokenPair, amount)
+    const details = await submitTx(txn, signer)
+    return details
+  }
 
   const submitIssueRequest = async (collatPercent: number) => {
     if (!(Number(await getMintCapacity()) > 0.0001)) {
@@ -165,6 +189,7 @@ export const setup = async () => {
     address,
     blob,
     active,
+    bridgeToKarura,
     claimRewards,
     depositCollateral,
     unbanned,
@@ -218,22 +243,6 @@ export const karuraApi = async () => {
 
   const { signer, address } = setupKeys(api)
 
-  const destinationKarura = {
-    V1: {
-      parents: 1,
-      interior: {
-        X2: [
-          {
-            Parachain: 2000,
-          },
-          {
-            AccountId32: { network: 'Any', id: signer.publicKey },
-          },
-        ],
-      },
-    },
-  }
-
   const destinationKintsugi = {
     V1: {
       parents: 1,
@@ -275,22 +284,17 @@ export const karuraApi = async () => {
     return Number(kintPrice / ksmPrice).toFixed(5)
   }
   const printStats = async () => {
-    console.log(signer.addressRaw)
-    console.log(signer.publicKey)
+    // console.log(signer.addressRaw)
+    // console.log(signer.publicKey)
     //   console.log(sig)
     console.log(`KAR Address: ${address}`)
     console.log(`🚗 KAR Balance: ${await getKarBalance()}`)
     console.log(`KAR/KSM Price: ${await getKsmKintPrice()}`)
   }
   // bridge from kintsugi
-  const bridgeFromKint = async (amount) => {
-    const txn = api.tx.xTokens.transfer(kint, amount, destinationKarura, 5000000000)
-    const details = await submitTx(txn, signer)
-    return details
-  }
 
   const bridgeToKint = async (amount) => {
-    const txn = api.tx.xTokens.transer(ksm, amount, destinationKintsugi, 5000000000)
+    const txn = api.tx.xTokens.transfer(ksm, amount, destinationKintsugi, 5000000000)
     const details = await submitTx(txn, signer)
     return details
   }
@@ -303,12 +307,12 @@ export const karuraApi = async () => {
 
   const getKsmFree = async () => {
     const bal = (await api.query.tokens.accounts(address, ksm)) as any
-    return bal.free
+    return (bal.free)
   }
 
   const getKintFree = async () => {
     const bal = (await api.query.tokens.accounts(address, kint)) as any
-    return bal.free
+    return (bal.free)
   }
 
   const swapKintForKsm = async (amount) => {
@@ -323,7 +327,6 @@ export const karuraApi = async () => {
     getKarBalance,
     getKsmFree,
     getKsmKintPrice,
-    bridgeFromKint,
     bridgeToKint,
     bridgeToKusama,
     getKintFree,
