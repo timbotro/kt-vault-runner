@@ -4,20 +4,21 @@
   "description": "Self-minting script for Kintsugi Vaults",
   "main": "index.js",
   "scripts": {
-    "self-mint": "npx ts-node scripts/mint.ts",
-    "run:issue": "npx ts-node scripts/issue.ts"
+    "run:mint": "npx ts-node scripts/mint.ts",
+    "run:harvest": "npx ts-node scripts/harvest.ts"
   },
   "author": "timbotronic",
   "license": "ISC",
   "dependencies": {
-    "@interlay/interbtc-api": "^1.9.1",
-    "@interlay/interbtc-types": "^1.6.0",
-    "@polkadot/api": "^8.3.2",
-    "@polkadot/types": "^8.3.2",
+    "@acala-network/api": "^4.1.1",
+    "@types/big.js": "^6.1.3",
     "@types/node": "^17.0.32",
+    "big.js": "^6.1.1",
     "bitcoinjs-lib": "^6.0.1",
+    "bn.js": "^5.2.0",
     "dotenv": "^16.0.1",
     "prettier": "^2.6.2",
+    "semver": "^7.3.7",
     "ts-node": "^10.7.0",
     "typescript": "^4.6.4"
   }
