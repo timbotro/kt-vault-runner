@@ -10,11 +10,12 @@ async function main() {
   await karContext.printStats()
   const kintHarvest = await ktContext.getKintPending()
   const ksmHarvest = Number(kintHarvest) * Number(await karContext.getKsmKintPrice())
-  console.log(`Harvestable Amount: ${kintHarvest} KINT`)
-  console.log("kar kint free: ", (await karContext.getKintFree()).toString())
+  console.log(`🌾 Harvestable Amount: ${kintHarvest} KINT / ${ksmHarvest.toFixed(2)} KSM`)
+  console.log('=============================')
+
   const rl = readline.createInterface({ input, output })
   const answer1 = await rl.question(
-    `Would you like to proceed with harvesting and depositing for ${ksmHarvest.toFixed(2)} KSM? (yes/no) `
+    `Would you like to proceed with harvesting, bridging, swapping and depositing? (yes/no) `
   )
   switch (answer1) {
     case 'yes':
@@ -27,21 +28,28 @@ async function main() {
       console.error(`⚠️ Invalid yes/no response entered: ${answer1} \n Aborting.`)
       throw new Error('Invalid user answer')
   }
-  console.log('=============================')
-  process.stdout.write('(1/5) Claiming rewards....')
-  await ktContext.claimRewards()
-  process.stdout.write('Done. ✅\n')
 
   const ktAmount = await ktContext.getKintFree()
-  if (Number(ktAmount) < 1) {
-    console.error(`Insufficient amount to bridge and convert, only ${ktAmount}KINT free`)
+  if (Number(kintHarvest) + Number(ktAmount) < 1) {
+    console.error(`Insufficient amount to bridge and convert, only ${kintHarvest + ktAmount} KINT free`)
     throw new Error('Insufficient harvest')
   }
+  const max = (Number(kintHarvest) + Number(ktAmount) - 1).toFixed(2)
+  const answer2 = await rl.question(
+    `How much KINT would you like to harvest and convert to KSM? (min:1 | max: ${max}) `
+  )
+  const amt = Number(answer2)
+  if (amt < 1) return console.error('Harvest amount entered too small')
+  if (amt > Number(max)) return console.error('Harvest amount exceeds maximum')
+
+  console.log('=============================')
+  process.stdout.write('(1/5) Claiming rewards....')
+  Number(kintHarvest) < 1 ? process.stdout.write('nothing to harvest...') : await ktContext.claimRewards()
+
+  process.stdout.write('Done. ✅\n')
 
   process.stdout.write('(2/5) Bridging to Karura...')
-  const bridgeAmount = new Big(Number(ktAmount) - 1).mul(new Big(Math.pow(10, 12)))
-  //   await karContext.bridgeFromKint(100)
-  process.stdout.write(`Bridging ${bridgeAmount}`)
+  const bridgeAmount = new Big(amt).mul(new Big(Math.pow(10, 12)))
   await ktContext.bridgeToKarura(bridgeAmount.toFixed(0))
   process.stdout.write('Done. ✅\n')
 

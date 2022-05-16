@@ -287,9 +287,9 @@ export const karuraApi = async () => {
     // console.log(signer.addressRaw)
     // console.log(signer.publicKey)
     //   console.log(sig)
-    console.log(`KAR Address: ${address}`)
+    console.log(`🏠 KAR Address: ${address}`)
     console.log(`🚗 KAR Balance: ${await getKarBalance()}`)
-    console.log(`KAR/KSM Price: ${await getKsmKintPrice()}`)
+    console.log(`🧮 KAR/KSM Price: ${await getKsmKintPrice()}`)
   }
   // bridge from kintsugi
 
