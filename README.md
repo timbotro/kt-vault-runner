@@ -17,15 +17,20 @@ This script will submit an atomic batched transaction which will:
 2. KINT balance in your vault
 3. Seed phrase of your vault
 
+## Installation
+1. Create a local seedphrase file somewhere on your filesystem: e.g. `mkdir ~/.private && touch ~/.private/seed.txt && vim ~/.private/seed.txt`
+2. Change permissions to be readable to only owner: e.g. `chmod 600 ~/.private/seed.txt`
+3. Change file owner to root: e.g. `sudo chown root seed.txt`
+4. Back in repo dir, create a local environment file: `cp .env.example .env`
+5. Replace seed path with absolute path to file created in step1
+6. Install libraries with `yarn`
+
+
 ## Usage
 :question: Are you sure you wish to take the risk? Be sure to ask around the Discord channel if you are wary.
 
-1. Create a local environment file: `cp .env.example .env`
-2. Replace seed phrase in `.env` file with your vault's one
-3. Install libraries with `yarn`
-4. Run script: `yarn self-mint`
-5. Follow instruction prompts and read ALL console output to verify numbers you are happy with
-6. Navigate to `https://kintsugi.interlay.io/transactions` to get issue request details
+- For self issuance workflow: `yarn run:mint`
+- For harvest & compound workflow: `yarn run:harvest`
 
 Enjoy!
 
@@ -70,16 +75,9 @@ Events posted in transaction:
 Good question to ask whenever pasting your seed phrase anywhere. 
 
 However, the seed phrase is only used to generate a signer key using the official Parity `@polkadot/api` library. 
-You can see exactly where how it is used in: `utils/helpers.ts::line15`
+You can see exactly where how it is used in: `utils/helpers.ts::line24`
 ```
-const signer = keyring.addFromMnemonic(process.env.SEED_PHRASE as string)
-```
-
-**_The seed phrase is not used anywhere else in the code._**
-
-Furthermore the only place the signer key is used to submit an extrinsic is at: `utils/helpers.ts::line15`
-```
-const unsub = await txn.signAndSend(signer, { nonce: -1 }, (block) => {
+    .then((data) => (signer = keyring.addFromMnemonic(data.toString().replace('\n', ''))))
 ```
 
 ### Will this work for interlay vaults?

@@ -4,6 +4,9 @@ import { payments } from 'bitcoinjs-lib'
 import Big from 'big.js'
 import { options } from '@acala-network/api'
 import { parseConfigFileTextToJson } from 'typescript'
+// const fs = require('fs')
+// var fs = require('@mh-cbon/sudo-fs');
+var fs = require('sudo-fs-promise')
 
 const kint = { Token: 'KINT' }
 const ksm = { Token: 'KSM' }
@@ -11,10 +14,18 @@ const kbtc = { Token: 'KBTC' }
 const kusd = { Token: 'KUSD' }
 const kar = { Token: 'KAR' }
 
-const setupKeys = (api: ApiPromise) => {
-  const ss58Prefix = api.consts.system.ss58Prefix as unknown
+const setupKeys = async (api: ApiPromise) => {
+  let signer
   const keyring = new Keyring({ type: 'sr25519' })
-  const signer = keyring.addFromMnemonic(process.env.SEED_PHRASE as string)
+  const ss58Prefix = api.consts.system.ss58Prefix as unknown
+
+  await fs
+    .readFile(process.env.SEED_PATH)
+    .then((data) => (signer = keyring.addFromMnemonic(data.toString().replace('\n', ''))))
+    .catch((err) => {
+      console.error('err:', err)
+      throw new Error('Problem reading seed phrase file')
+    })
 
   return { ss58Prefix, keyring, signer, address: keyring.encodeAddress(signer.publicKey, ss58Prefix as number) }
 }
@@ -26,7 +37,7 @@ export const setup = async () => {
   const api = await ApiPromise.create({ provider })
   await api.isReady
 
-  const { address, signer } = setupKeys(api)
+  const { address, signer } = await setupKeys(api)
 
   const destinationKarura = {
     V1: {
@@ -241,7 +252,7 @@ export const karuraApi = async () => {
   const api = await ApiPromise.create(options({ provider: wsProvider }))
   await api.isReady
 
-  const { signer, address } = setupKeys(api)
+  const { signer, address } = await setupKeys(api)
 
   const destinationKintsugi = {
     V1: {
@@ -307,12 +318,12 @@ export const karuraApi = async () => {
 
   const getKsmFree = async () => {
     const bal = (await api.query.tokens.accounts(address, ksm)) as any
-    return (bal.free)
+    return bal.free
   }
 
   const getKintFree = async () => {
     const bal = (await api.query.tokens.accounts(address, kint)) as any
-    return (bal.free)
+    return bal.free
   }
 
   const swapKintForKsm = async (amount) => {
