@@ -4,6 +4,8 @@ import { payments } from 'bitcoinjs-lib'
 import { getCgPrice } from '../utils/fetch'
 import Big from 'big.js'
 import { options } from '@acala-network/api'
+import { FixedPointNumber, FixedPointNumber as FP } from '@acala-network/sdk-core'
+
 
 // import * as tokens from "../static/tokens"
 var fs = require('sudo-fs-promise')
@@ -89,12 +91,16 @@ export const setup = async () => {
 
   const getKintFree = async (formatted: boolean = false) => {
     const resp = Number(((await api.query.tokens.accounts(address, kint)) as any).free) / 10 ** 12
+    // const resp = (await api.query.tokens.accounts(address,kint) as any).free
     return formatted ? resp : resp.toFixed(2)
   }
 
   const getKsmFree = async (formatted: boolean = false) => {
-    const resp = (await api.query.tokens.accounts(address, ksm)) as any
-    return resp.free
+    const free = ((await api.query.tokens.accounts(address, ksm)) as any).free
+    // const reserved = ((await api.query.tokens.accounts(address, ksm)) as any).reserved
+    // const available = new FP(free.toString(),1).sub(new FP(reserved.toString(),1))
+    // console.log(free.toString())
+    return new FP(free.toString())
   }
 
   const getKintPending = async () => {
@@ -126,8 +132,8 @@ export const setup = async () => {
 
     return (ratio * 100).toFixed(2)
   }
-  const bridgeToKarura = async (amount) => {
-    const txn = api.tx.xTokens.transfer(kint, amount, destinationKarura, 5000000000)
+  const bridgeToKarura = async (amount: FixedPointNumber) => {
+    const txn = api.tx.xTokens.transfer(kint, amount.toChainData(), destinationKarura, 5000000000)
     const details = await submitTx(txn, signer)
     return details
   }
@@ -147,8 +153,8 @@ export const setup = async () => {
     return claim
   }
 
-  const depositCollateral = async (amount) => {
-    const txn = api.tx.vaultRegistry.depositCollateral(tokenPair, amount)
+  const depositCollateral = async (amount: FixedPointNumber) => {
+    const txn = api.tx.vaultRegistry.depositCollateral(tokenPair, amount.toString())
     const details = await submitTx(txn, signer)
     return details
   }
@@ -303,7 +309,7 @@ export const karuraApi = async () => {
     const kintInKsm = await getKsmKintPrice()
     const kintInUsd = Number(kintInKsm) * ksmPrice
 
-    const diff = calcPercentages(kintPrice, kintInUsd)
+    // const diff = calcPercentages(kintPrice, kintInUsd)
 
     console.log(`🏠 KAR Address: ${address}`)
     console.log(`🚗 KAR Balance (for fees): ${await getKarBalance()}`)
@@ -319,8 +325,8 @@ export const karuraApi = async () => {
 
   // bridge from kintsugi
 
-  const bridgeToKint = async (amount) => {
-    const txn = api.tx.xTokens.transfer(ksm, amount, destinationKintsugi, 5000000000)
+  const bridgeToKint = async (amount: FixedPointNumber) => {
+    const txn = api.tx.xTokens.transfer(ksm, amount.toString(), destinationKintsugi, 5000000000)
     const details = await submitTx(txn, signer)
     return details
   }
@@ -332,17 +338,21 @@ export const karuraApi = async () => {
   }
 
   const getKsmFree = async () => {
-    const bal = (await api.query.tokens.accounts(address, ksm)) as any
-    return bal.free
+    const free = ((await api.query.tokens.accounts(address, ksm)) as any).free
+    const reserved = ((await api.query.tokens.accounts(address, ksm)) as any).reserved
+    const available = new FP(free.toString(),1).sub(new FP(reserved.toString(),1))
+    return available
   }
 
   const getKintFree = async () => {
-    const bal = (await api.query.tokens.accounts(address, kint)) as any
-    return bal.free
+    const free = (((await api.query.tokens.accounts(address, kint)) as any).free).toString()
+    const reserved = (((await api.query.tokens.accounts(address, kint)) as any).reserved).toString()
+    const available = new FP(free,1).sub(new FP(reserved,1))
+    return available
   }
 
-  const swapKintForKsm = async (amount) => {
-    const txn = api.tx.dex.swapWithExactSupply([kint, kusd, kar, ksm], amount, 0)
+  const swapKintForKsm = async (amount: FixedPointNumber) => {
+    const txn = api.tx.dex.swapWithExactSupply([kint, kusd, kar, ksm], amount.toString(), 0)
     const details = await submitTx(txn, signer)
     return details
   }

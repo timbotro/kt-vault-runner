@@ -1,6 +1,8 @@
-const fetch = require('node-fetch')
 const cgUri = 'https://api.coingecko.com/api/v3'
 var shortUrl = require('node-url-shortener')
+var fetch = require('node-fetch')
+import { FixedPointNumber as FP } from '@acala-network/sdk-core'
+import { nToBigInt } from '@polkadot/util'
 
 export const getCgPrice = async (asset: string) => {
   try {
@@ -39,9 +41,9 @@ export const printSuccess = async (network: string, hash: string) => {
 async function main() {
   const price = await getCgPrice('kintsugi')
   console.log(price)
-
-  printSuccess('kintsugi', '0x90ceff13e02b60349426aea30118c5a1282b102a8a6fd0fef054d998558ba78c')
-  // console.log(link)
+const num = new FP("10000000000000")
+const timbo  = num.frac()
+console.log(num._getInner().toString())
 }
 
 // main()

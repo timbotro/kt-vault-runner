@@ -1,7 +1,7 @@
 import { setup, parseResponse } from '../utils/helpers'
 import { printSuccess } from '../utils/fetch'
-const readline = require('node:readline/promises')
 import { stdin as input, stdout as output } from 'node:process'
+var readline = require('node:readline/promises')
 
 async function main() {
   const context = await setup()
