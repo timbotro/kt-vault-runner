@@ -4,8 +4,8 @@ import { payments } from 'bitcoinjs-lib'
 import { getCgPrice } from '../utils/fetch'
 import Big from 'big.js'
 import { options } from '@acala-network/api'
+
 // import * as tokens from "../static/tokens"
-const fetch = require('node-fetch')
 var fs = require('sudo-fs-promise')
 var colors = require('colors')
 

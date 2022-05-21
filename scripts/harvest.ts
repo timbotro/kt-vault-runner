@@ -1,4 +1,5 @@
 import { setup, karuraApi } from '../utils/helpers'
+import { printSuccess } from '../utils/fetch'
 const readline = require('node:readline/promises')
 import { stdin as input, stdout as output } from 'node:process'
 import Big from 'big.js'
@@ -7,11 +8,10 @@ async function main() {
   const ktContext = await setup()
   await ktContext.printStats()
   const karContext = await karuraApi()
-  
+
   const kintHarvest = await ktContext.getKintPending()
   const ksmHarvest = Number(kintHarvest) * Number(await karContext.getKsmKintPrice())
   await karContext.printStats(kintHarvest, ksmHarvest)
-
 
   const rl = readline.createInterface({ input, output })
   const answer1 = await rl.question(
@@ -44,28 +44,32 @@ async function main() {
 
   console.log('=============================')
   process.stdout.write('(1/5) Claiming rewards....')
-  Number(kintHarvest) < 1 ? process.stdout.write('nothing to harvest...') : await ktContext.claimRewards()
 
-  process.stdout.write('Done. ✅\n')
+  if (Number(kintHarvest) < 1) {
+    process.stdout.write('nothing to harvest. Done ✅\n')
+  } else {
+    const hash = await ktContext.claimRewards()
+    await printSuccess('kintsugi', hash.hash)
+  }
 
   process.stdout.write('(2/5) Bridging to Karura...')
   const bridgeAmount = new Big(amt).mul(new Big(Math.pow(10, 12)))
-  await ktContext.bridgeToKarura(bridgeAmount.toFixed(0))
-  process.stdout.write('Done. ✅\n')
+  const hash2 = await ktContext.bridgeToKarura(bridgeAmount.toFixed(0))
+  await printSuccess('kintsugi', hash2.hash)
 
   process.stdout.write('(3/5) Swapping KINT for KSM....')
-  await karContext.swapKintForKsm((await karContext.getKintFree()).toString())
-  process.stdout.write('Done. ✅\n')
+  const hash3 = await karContext.swapKintForKsm((await karContext.getKintFree()).toString())
+  await printSuccess('karura', hash3.hash)
 
   process.stdout.write('(4/5) Bridging back to Kintsugi...')
   const ksmAmount = await karContext.getKsmFree()
-  await karContext.bridgeToKint(ksmAmount.toString())
-  process.stdout.write('Done. ✅\n')
+  const hash4 = await karContext.bridgeToKint(ksmAmount.toString())
+  await printSuccess('karura', hash4.hash)
 
   process.stdout.write('(5/5) Depositing Collateral back into vault...')
   const ksmAmount2 = await ktContext.getKsmFree()
-  await ktContext.depositCollateral(ksmAmount2.toString())
-  process.stdout.write('Done. ✅\n')
+  const hash5 = await ktContext.depositCollateral(ksmAmount2.toString())
+  await printSuccess('kintsugi', hash5.hash)
 
   rl.close()
 }

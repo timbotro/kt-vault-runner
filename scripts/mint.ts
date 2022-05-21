@@ -1,4 +1,5 @@
 import { setup, parseResponse } from '../utils/helpers'
+import { printSuccess } from '../utils/fetch'
 const readline = require('node:readline/promises')
 import { stdin as input, stdout as output } from 'node:process'
 
@@ -37,6 +38,7 @@ async function main() {
   }
 
   console.log(`Batched TXNs in finalized block: ${resp.hash}`)
+  await printSuccess('kintsugi', resp.hash)
   const { vaultBtcAddress, amount, events } = parseResponse(resp)
   console.log('Events posted in transaction:' + events)
 
