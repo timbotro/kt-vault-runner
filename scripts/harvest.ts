@@ -7,11 +7,11 @@ async function main() {
   const ktContext = await setup()
   await ktContext.printStats()
   const karContext = await karuraApi()
-  await karContext.printStats()
+  
   const kintHarvest = await ktContext.getKintPending()
   const ksmHarvest = Number(kintHarvest) * Number(await karContext.getKsmKintPrice())
-  console.log(`🌾 Harvestable Amount: ${kintHarvest} KINT / ${ksmHarvest.toFixed(2)} KSM`)
-  console.log('=============================')
+  await karContext.printStats(kintHarvest, ksmHarvest)
+
 
   const rl = readline.createInterface({ input, output })
   const answer1 = await rl.question(

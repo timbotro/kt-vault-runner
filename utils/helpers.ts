@@ -1,18 +1,20 @@
 import 'dotenv/config'
 import { ApiPromise, WsProvider, Keyring } from '@polkadot/api'
 import { payments } from 'bitcoinjs-lib'
+import { getCgPrice } from '../utils/fetch'
 import Big from 'big.js'
 import { options } from '@acala-network/api'
-import { parseConfigFileTextToJson } from 'typescript'
-// const fs = require('fs')
-// var fs = require('@mh-cbon/sudo-fs');
+// import * as tokens from "../static/tokens"
+const fetch = require('node-fetch')
 var fs = require('sudo-fs-promise')
+var colors = require('colors')
 
 const kint = { Token: 'KINT' }
 const ksm = { Token: 'KSM' }
 const kbtc = { Token: 'KBTC' }
 const kusd = { Token: 'KUSD' }
 const kar = { Token: 'KAR' }
+const cgUri = 'https://api.coingecko.com/api/v3'
 
 const setupKeys = async (api: ApiPromise) => {
   let signer
@@ -294,14 +296,27 @@ export const karuraApi = async () => {
 
     return Number(kintPrice / ksmPrice).toFixed(5)
   }
-  const printStats = async () => {
-    // console.log(signer.addressRaw)
-    // console.log(signer.publicKey)
-    //   console.log(sig)
+  const printStats = async (kintHarvest, ksmHarvest) => {
+    const kintPrice = await getCgPrice('kintsugi')
+    const ksmPrice = await getCgPrice('kusama')
+
+    const kintInKsm = await getKsmKintPrice()
+    const kintInUsd = Number(kintInKsm) * ksmPrice
+
+    const diff = calcPercentages(kintPrice, kintInUsd)
+
     console.log(`🏠 KAR Address: ${address}`)
-    console.log(`🚗 KAR Balance: ${await getKarBalance()}`)
-    console.log(`🧮 KAR/KSM Price: ${await getKsmKintPrice()}`)
+    console.log(`🚗 KAR Balance (for fees): ${await getKarBalance()}`)
+    console.log(`🧮 Karura KINT Price: ${kintInKsm} KSM / $${kintInUsd.toFixed(2)}`)
+    printPercentages(kintPrice, kintInUsd)
+    console.log(
+      `🌾 Harvestable Amount: ${kintHarvest} KINT / ${ksmHarvest.toFixed(2)} KSM / $${(
+        kintPrice * Number(kintHarvest)
+      ).toFixed(2)}`
+    )
+    console.log('=============================')
   }
+
   // bridge from kintsugi
 
   const bridgeToKint = async (amount) => {
@@ -365,4 +380,23 @@ const submitTx = async (tx, signer) => {
     })
 
   return details
+}
+
+const printPercentages = (num1: number, num2: number) => {
+  const percent = calcPercentages(num1, num2)
+
+  process.stdout.write(`🦎 Chain vs CoinGecko price: `)
+  if (percent > 0) {
+    process.stdout.write(colors.green(`${percent.toFixed(2)}%\n`))
+  } else {
+    process.stdout.write(colors.red(`${percent.toFixed(2)}%\n`))
+  }
+}
+
+const calcPercentages = (num1: number, num2: number) => {
+  const diff = num2 - num1
+  const ratio = diff / num1
+  const percent = ratio * 100
+
+  return percent
 }

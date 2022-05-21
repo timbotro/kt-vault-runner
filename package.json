@@ -17,11 +17,16 @@
     "big.js": "^6.1.1",
     "bitcoinjs-lib": "^6.0.1",
     "bn.js": "^5.2.0",
+    "colors": "^1.4.0",
     "dotenv": "^16.0.1",
+    "node-fetch": "2",
     "prettier": "^2.6.2",
     "semver": "^7.3.7",
     "sudo-fs-promise": "^1.0.1",
     "ts-node": "^10.7.0",
     "typescript": "^4.6.4"
+  },
+  "resolutions": {
+    "async": "2.6.4"
   }
 }
