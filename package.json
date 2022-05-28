@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "run:mint": "npx ts-node scripts/mint.ts",
-    "run:harvest": "npx ts-node scripts/harvest.ts"
+    "run:harvest": "npx ts-node scripts/harvest.ts",
+    "run:rebalance": "npx ts-node scripts/rebalance.ts"
   },
   "author": "timbotronic",
   "license": "ISC",

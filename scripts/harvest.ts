@@ -47,7 +47,7 @@ async function main() {
   console.log('=============================')
   process.stdout.write('(1/3) Claiming and Bridging rewards....')
   let step1txns: any[] = []
-  if (Number(kintHarvest) > 0) {
+  if (Number(kintHarvest) > 1) {
     const txn = ktContext.claimRewards()
     step1txns.push(txn)
   }
@@ -63,17 +63,16 @@ async function main() {
     throw new Error('Free kint < requested amount')
   }
 
-  await sleep(6000) // Wait one relay chain block
   const swapAmount = await karContext.getKintFree()
   process.stdout.write(
     `(2/3) Swapping and bridging back ${swapAmount.div(new FP(1000000000000, 12)).toString(2)} KINT for KSM....`
   )
-  let step2Txns: any[] = []
-  const { kintPrice, ksmPrice } = await karContext.getDexPrices()
 
   try {
+    let step2Txns: any[] = []
+    const { kintPrice, ksmPrice } = await karContext.getDexPrices()
     step2Txns.push(karContext.swapKintForKsm(swapAmount))
-    const safetyFactor = new FP(0.0995)
+    const safetyFactor = new FP(0.0985)
     const result = swapAmount.mul(kintPrice).div(ksmPrice).mul(safetyFactor)
     step2Txns.push(karContext.bridgeToKint(result))
     const hash = await karContext.submitBatch(step2Txns)
@@ -83,9 +82,10 @@ async function main() {
     throw new Error('error on step2')
   }
 
-  await sleep(6000) // Wait one relay chain block
   const ksmAmountOnKt = await ktContext.getKsmFree()
-  process.stdout.write(`(3/3) Depositing ${(ksmAmountOnKt.div(new FP(1000000000000,12))).toString(5)} KSM Collateral back into vault...`)
+  process.stdout.write(
+    `(3/3) Depositing ${ksmAmountOnKt.div(new FP(1000000000000, 12)).toString(5)} KSM Collateral back into vault...`
+  )
   const hash5 = await ktContext.depositCollateral(ksmAmountOnKt)
   await printSuccess('kintsugi', hash5.hash)
 

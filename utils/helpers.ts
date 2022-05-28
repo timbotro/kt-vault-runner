@@ -89,9 +89,14 @@ export const setup = async () => {
   }
 
   const getKintFree = async (formatted: boolean = false) => {
-    const resp = Number(((await api.query.tokens.accounts(address, kint)) as any).free) / 10 ** 12
+    // const resp = Number(((await api.query.tokens.accounts(address, kint)) as any).free) / 10 ** 12
     // const resp = (await api.query.tokens.accounts(address,kint) as any).free
-    return formatted ? resp : resp.toFixed(2)
+    const { free, frozen } = (await api.query.tokens.accounts(address, kint)) as any
+    const freeFP = new FP(free.toString())
+    const frozenFP = new FP(frozen.toString())
+    const result = freeFP.sub(frozenFP).div(new FP(10 ** 12))
+
+    return formatted ? result.toNumber(2) : result.toNumber()
   }
 
   const getKsmFree = async (formatted: boolean = false) => {
@@ -327,6 +332,21 @@ export const karuraApi = async () => {
 
     return Number(kintPrice / ksmPrice).toFixed(5)
   }
+
+  const getStakedLp = async () => {
+    const pool = {Dex: {DexShare: [kusd,kbtc]}}
+    const resp = (await api.query.rewards.sharesAndWithdrawnRewards(pool, address))
+    const json =  resp.toJSON()!
+
+    return {balance: new FP(json[0]), rewards: json[1]}
+  }
+
+  const getStakedLpBalance = async () => {
+    const resp = (await getStakedLp()).balance
+    const bal = resp.div(new FP(10**12))
+    return bal
+  }
+
   const printStats = async (kintHarvest, ksmHarvest) => {
     const kintPrice = await getCgPrice('kintsugi')
     const ksmPrice = await getCgPrice('kusama')
@@ -405,6 +425,8 @@ export const karuraApi = async () => {
     getKsmFree,
     getKsmKintPrice,
     getDexPrices,
+    getStakedLp,
+    getStakedLpBalance,
     bridgeToKint,
     bridgeToKusama,
     getKintFree,
