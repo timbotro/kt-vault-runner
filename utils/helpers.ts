@@ -6,7 +6,6 @@ import Big from 'big.js'
 import { options } from '@acala-network/api'
 import { FixedPointNumber, FixedPointNumber as FP } from '@acala-network/sdk-core'
 
-
 // import * as tokens from "../static/tokens"
 var fs = require('sudo-fs-promise')
 var colors = require('colors')
@@ -132,7 +131,13 @@ export const setup = async () => {
 
     return (ratio * 100).toFixed(2)
   }
-  const bridgeToKarura = async (amount: FixedPointNumber) => {
+
+  const bridgeToKarura = (amount: FixedPointNumber) => {
+    const txn = api.tx.xTokens.transfer(kint, amount.toChainData(), destinationKarura, 5000000000)
+    return txn
+  }
+
+  const bridgeToKaruraAction = async (amount: FixedPointNumber) => {
     const txn = api.tx.xTokens.transfer(kint, amount.toChainData(), destinationKarura, 5000000000)
     const details = await submitTx(txn, signer)
     return details
@@ -147,7 +152,12 @@ export const setup = async () => {
     return remaining.toFixed(5)
   }
 
-  const claimRewards = async () => {
+  const claimRewards = () => {
+    const txn = api.tx.fee.withdrawRewards(ksmBtcVaultPrimitive, 0)
+    return txn
+  }
+
+  const claimRewardsAction = async () => {
     const txn = api.tx.fee.withdrawRewards(ksmBtcVaultPrimitive, 0)
     const claim = await submitTx(txn, signer)
     return claim
@@ -155,6 +165,12 @@ export const setup = async () => {
 
   const depositCollateral = async (amount: FixedPointNumber) => {
     const txn = api.tx.vaultRegistry.depositCollateral(tokenPair, amount.toString())
+    const details = await submitTx(txn, signer)
+    return details
+  }
+
+  const submitBatch = async (calls: any[]) => {
+    const txn = api.tx.utility.batchAll(calls)
     const details = await submitTx(txn, signer)
     return details
   }
@@ -221,6 +237,7 @@ export const setup = async () => {
     getMintCapacity,
     getToBeIssued,
     submitIssueRequest,
+    submitBatch,
     printStats,
   }
 }
@@ -294,6 +311,14 @@ export const karuraApi = async () => {
     const bal = resp.data.free
     return (Number(bal) / 10 ** 12).toFixed(2)
   }
+  const getDexPrices = async () => {
+    const respKint = ((await api.query.dex.liquidityPool([kusd, kint])) as any).toJSON()
+    const respKsm = ((await api.query.dex.liquidityPool([kusd, ksm])) as any).toJSON()
+    const kintPrice = new FP(respKint[0]).div(new FP(respKint[1]))
+    const ksmPrice = new FP(respKsm[0]).div(new FP(respKsm[1]))
+    return { kintPrice, ksmPrice }
+  }
+
   const getKsmKintPrice = async () => {
     const respKint = (await api.query.dex.liquidityPool([kusd, kint])).toJSON()!
     const respKsm = (await api.query.dex.liquidityPool([kusd, ksm])).toJSON()!
@@ -325,7 +350,12 @@ export const karuraApi = async () => {
 
   // bridge from kintsugi
 
-  const bridgeToKint = async (amount: FixedPointNumber) => {
+  const bridgeToKint = (amount: FixedPointNumber) => {
+    const txn = api.tx.xTokens.transfer(ksm, amount.toChainData(), destinationKintsugi, 5000000000)
+    return txn
+  }
+
+  const bridgeToKintAction = async (amount: FixedPointNumber) => {
     const txn = api.tx.xTokens.transfer(ksm, amount.toString(), destinationKintsugi, 5000000000)
     const details = await submitTx(txn, signer)
     return details
@@ -340,19 +370,30 @@ export const karuraApi = async () => {
   const getKsmFree = async () => {
     const free = ((await api.query.tokens.accounts(address, ksm)) as any).free
     const reserved = ((await api.query.tokens.accounts(address, ksm)) as any).reserved
-    const available = new FP(free.toString(),1).sub(new FP(reserved.toString(),1))
+    const available = new FP(free.toString(), 1).sub(new FP(reserved.toString(), 1))
     return available
   }
 
   const getKintFree = async () => {
-    const free = (((await api.query.tokens.accounts(address, kint)) as any).free).toString()
-    const reserved = (((await api.query.tokens.accounts(address, kint)) as any).reserved).toString()
-    const available = new FP(free,1).sub(new FP(reserved,1))
+    const free = ((await api.query.tokens.accounts(address, kint)) as any).free.toString()
+    const reserved = ((await api.query.tokens.accounts(address, kint)) as any).reserved.toString()
+    const available = new FP(free, 1).sub(new FP(reserved, 1))
     return available
   }
 
-  const swapKintForKsm = async (amount: FixedPointNumber) => {
+  const swapKintForKsm = (amount: FixedPointNumber) => {
     const txn = api.tx.dex.swapWithExactSupply([kint, kusd, kar, ksm], amount.toString(), 0)
+    return txn
+  }
+
+  const swapKintForKsmAction = async (amount: FixedPointNumber) => {
+    const txn = api.tx.dex.swapWithExactSupply([kint, kusd, kar, ksm], amount.toString(), 0)
+    const details = await submitTx(txn, signer)
+    return details
+  }
+
+  const submitBatch = async (calls: any[]) => {
+    const txn = api.tx.utility.batchAll(calls)
     const details = await submitTx(txn, signer)
     return details
   }
@@ -363,10 +404,12 @@ export const karuraApi = async () => {
     getKarBalance,
     getKsmFree,
     getKsmKintPrice,
+    getDexPrices,
     bridgeToKint,
     bridgeToKusama,
     getKintFree,
     swapKintForKsm,
+    submitBatch,
   }
 }
 

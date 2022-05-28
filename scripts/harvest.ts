@@ -4,7 +4,7 @@ const readline = require('node:readline/promises')
 import { stdin as input, stdout as output } from 'node:process'
 import { FixedPointNumber as FP } from '@acala-network/sdk-core'
 import Big from 'big.js'
-import { ksm } from '../static/tokens'
+import { kar, ksm } from '../static/tokens'
 
 async function main() {
   const ktContext = await setup()
@@ -45,35 +45,47 @@ async function main() {
   if (amt > Number(max)) return console.error('Harvest amount exceeds maximum')
 
   console.log('=============================')
-  process.stdout.write('(1/5) Claiming rewards....')
-
-  if (Number(kintHarvest) < 1) {
-    process.stdout.write('nothing to harvest. Done ✅\n')
-  } else {
-    const hash = await ktContext.claimRewards()
-    await printSuccess('kintsugi', hash.hash)
+  process.stdout.write('(1/3) Claiming and Bridging rewards....')
+  let step1txns: any[] = []
+  if (Number(kintHarvest) > 0) {
+    const txn = ktContext.claimRewards()
+    step1txns.push(txn)
   }
 
-  process.stdout.write(`(2/5) Bridging to ${amt} KINT ➡️ Karura...`)
-  const bridgeAmount = new FP(amt, 12)
-  const hash2 = await ktContext.bridgeToKarura(bridgeAmount)
-  await printSuccess('kintsugi', hash2.hash)
-  await sleep(5000) // For Bridged token to appear
-  
+  if ((await ktContext.getKintFree()) >= amt) {
+    const bridgeAmount = new FP(amt, 12)
+    const txn = ktContext.bridgeToKarura(bridgeAmount)
+    step1txns.push(txn)
+    const hash = await ktContext.submitBatch(step1txns)
+    await printSuccess('kintsugi', hash.hash)
+  } else {
+    console.error('Unexpected balance values, aborting....')
+    throw new Error('Free kint < requested amount')
+  }
 
+  await sleep(6000) // Wait one relay chain block
   const swapAmount = await karContext.getKintFree()
-  process.stdout.write(`(3/5) Swapping ${(swapAmount.div(new FP(1000000000000,12))).toString(2)} KINT for KSM....`)
-  const hash3 = await karContext.swapKintForKsm(swapAmount)
-  await printSuccess('karura', hash3.hash)
+  process.stdout.write(
+    `(2/3) Swapping and bridging back ${swapAmount.div(new FP(1000000000000, 12)).toString(2)} KINT for KSM....`
+  )
+  let step2Txns: any[] = []
+  const { kintPrice, ksmPrice } = await karContext.getDexPrices()
 
-  const ksmAmount = await karContext.getKsmFree()
-  process.stdout.write(`(4/5) Bridging back ${(ksmAmount.div(new FP(1000000000000,12))).toString(5)} KSM to Kintsugi...`)
-  const hash4 = await karContext.bridgeToKint(ksmAmount)
-  await printSuccess('karura', hash4.hash)
+  try {
+    step2Txns.push(karContext.swapKintForKsm(swapAmount))
+    const safetyFactor = new FP(0.0995)
+    const result = swapAmount.mul(kintPrice).div(ksmPrice).mul(safetyFactor)
+    step2Txns.push(karContext.bridgeToKint(result))
+    const hash = await karContext.submitBatch(step2Txns)
+    await printSuccess('karura', hash.hash)
+  } catch (e) {
+    console.error(e)
+    throw new Error('error on step2')
+  }
 
-  await sleep(5000) // For Bridged token to appear
+  await sleep(6000) // Wait one relay chain block
   const ksmAmountOnKt = await ktContext.getKsmFree()
-  process.stdout.write(`(5/5) Depositing ${(ksmAmountOnKt.div(new FP(1000000000000,12))).toString(5)} KSM Collateral back into vault...`)
+  process.stdout.write(`(3/3) Depositing ${(ksmAmountOnKt.div(new FP(1000000000000,12))).toString(5)} KSM Collateral back into vault...`)
   const hash5 = await ktContext.depositCollateral(ksmAmountOnKt)
   await printSuccess('kintsugi', hash5.hash)
 
