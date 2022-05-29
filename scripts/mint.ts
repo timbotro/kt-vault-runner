@@ -1,10 +1,11 @@
-import { setup, parseResponse } from '../utils/helpers'
+import { parseResponse } from '../utils/helpers'
 import { printSuccess } from '../utils/fetch'
 import { stdin as input, stdout as output } from 'node:process'
+import { setupKintsugi } from '../utils/kintsugi'
 var readline = require('node:readline/promises')
 
 async function main() {
-  const context = await setup()
+  const context = await setupKintsugi()
   await context.printStats()
 
   const rl = readline.createInterface({ input, output })

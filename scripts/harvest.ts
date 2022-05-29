@@ -1,15 +1,15 @@
-import { setup, karuraApi, sleep } from '../utils/helpers'
+import {  sleep } from '../utils/helpers'
+import {setupKintsugi } from "../utils/kintsugi"
+import {setupKarura } from "../utils/karura"
 import { printSuccess } from '../utils/fetch'
 const readline = require('node:readline/promises')
 import { stdin as input, stdout as output } from 'node:process'
 import { FixedPointNumber as FP } from '@acala-network/sdk-core'
-import Big from 'big.js'
-import { kar, ksm } from '../static/tokens'
 
 async function main() {
-  const ktContext = await setup()
+  const ktContext = await setupKintsugi()
   await ktContext.printStats()
-  const karContext = await karuraApi()
+  const karContext = await setupKarura()
 
   const kintHarvest = await ktContext.getKintPending()
   const ksmHarvest = Number(kintHarvest) * Number(await karContext.getKsmKintPrice())
@@ -70,7 +70,7 @@ async function main() {
 
   try {
     let step2Txns: any[] = []
-    const { kintPrice, ksmPrice } = await karContext.getDexPrices()
+    const {tokenAPrice: kintPrice, tokenBPrice: ksmPrice} = await karContext.getDexPrices()
     step2Txns.push(karContext.swapKintForKsm(swapAmount))
     const safetyFactor = new FP(0.0985)
     const result = swapAmount.mul(kintPrice).div(ksmPrice).mul(safetyFactor)
