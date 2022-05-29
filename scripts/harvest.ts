@@ -1,6 +1,6 @@
-import {  sleep } from '../utils/helpers'
-import {setupKintsugi } from "../utils/kintsugi"
-import {setupKarura } from "../utils/karura"
+import { sleep } from '../utils/helpers'
+import { setupKintsugi } from '../utils/kintsugi'
+import { setupKarura } from '../utils/karura'
 import { printSuccess } from '../utils/fetch'
 const readline = require('node:readline/promises')
 import { stdin as input, stdout as output } from 'node:process'
@@ -46,31 +46,29 @@ async function main() {
 
   console.log('=============================')
   process.stdout.write('(1/3) Claiming and Bridging rewards....')
-  let step1txns: any[] = []
-  if (Number(kintHarvest) > 1) {
-    const txn = ktContext.claimRewards()
-    step1txns.push(txn)
-  }
-
-  if ((await ktContext.getKintFree()) >= amt) {
+  try {
+    let step1txns: any[] = []
+    if (Number(kintHarvest) > 1) {
+      const txn = ktContext.claimRewards()
+      step1txns.push(txn)
+    }
     const bridgeAmount = new FP(amt, 12)
     const txn = ktContext.bridgeToKarura(bridgeAmount)
     step1txns.push(txn)
     const hash = await ktContext.submitBatch(step1txns)
     await printSuccess('kintsugi', hash.hash)
-  } else {
-    console.error('Unexpected balance values, aborting....')
-    throw new Error('Free kint < requested amount')
+  } catch (e) {
+    console.error(e)
+    throw new Error('error on step1')
   }
 
   const swapAmount = await karContext.getKintFree()
   process.stdout.write(
     `(2/3) Swapping and bridging back ${swapAmount.div(new FP(1000000000000, 12)).toString(2)} KINT for KSM....`
   )
-
   try {
     let step2Txns: any[] = []
-    const {tokenAPrice: kintPrice, tokenBPrice: ksmPrice} = await karContext.getDexPrices()
+    const { tokenAPrice: kintPrice, tokenBPrice: ksmPrice } = await karContext.getDexPrices()
     step2Txns.push(karContext.swapKintForKsm(swapAmount))
     const safetyFactor = new FP(0.0985)
     const result = swapAmount.mul(kintPrice).div(ksmPrice).mul(safetyFactor)

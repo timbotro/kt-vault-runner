@@ -95,8 +95,7 @@ export const setupKarura = async () => {
     // const tokenAPrice = await getDexPrice(kusd, tokenA)
     const tokenBPrice = await getDexPrice(kusd, tokenB)
     const tokenBAmount = myTokenB.mul(tokenBPrice)
-    // const value = myTokenA.add(myTokenB.mul(tokenBPrice))
-
+    
     return tokenAAmount.add(tokenBAmount)
   }
 

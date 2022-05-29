@@ -1,5 +1,5 @@
 import 'dotenv/config'
-import { ApiPromise, WsProvider, Keyring } from '@polkadot/api'
+import { ApiPromise, WsProvider } from '@polkadot/api'
 import Big from 'big.js'
 import { FixedPointNumber, FixedPointNumber as FP } from '@acala-network/sdk-core'
 import { kusd, kint, ksm, kbtc, kar } from '../static/tokens'
