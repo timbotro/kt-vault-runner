@@ -45,7 +45,7 @@ async function main() {
   if (amt > Number(max)) return console.error('Harvest amount exceeds maximum')
 
   console.log('=============================')
-  process.stdout.write('(1/3) Claiming and Bridging rewards....')
+  process.stdout.write('(1/4) Claiming and Bridging rewards....')
   try {
     let step1txns: any[] = []
     if (Number(kintHarvest) > 1) {
@@ -64,25 +64,26 @@ async function main() {
 
   const swapAmount = await karContext.getKintFree()
   process.stdout.write(
-    `(2/3) Swapping and bridging back ${swapAmount.div(new FP(1000000000000, 12)).toString(2)} KINT for KSM....`
+    `(2/4) Swapping ${swapAmount.div(new FP(10 ** 12)).toNumber(5)} KINT for KSM....`
   )
   try {
-    let step2Txns: any[] = []
-    const { tokenAPrice: kintPrice, tokenBPrice: ksmPrice } = await karContext.getDexPrices()
-    step2Txns.push(karContext.swapKintForKsm(swapAmount))
-    const safetyFactor = new FP(0.0985)
-    const result = swapAmount.mul(kintPrice).div(ksmPrice).mul(safetyFactor)
-    step2Txns.push(karContext.bridgeToKint(result))
-    const hash = await karContext.submitBatch(step2Txns)
-    await printSuccess('karura', hash.hash)
+    const hash2 = await karContext.swapAllKintForKsm()
+    await printSuccess('karura', hash2.hash)
   } catch (e) {
     console.error(e)
     throw new Error('error on step2')
   }
+  
+  const bridgeBack= await karContext.getKsmFree()
+  process.stdout.write(
+    `(3/4) Bridging back ${bridgeBack.div(new FP(10**12)).toNumber(5)} KSM....`
+  )
+  const hash3 = await karContext.bridgeAllKsmToKint()
+  await printSuccess("karura", hash3.hash)
 
   const ksmAmountOnKt = await ktContext.getKsmFree()
   process.stdout.write(
-    `(3/3) Depositing ${ksmAmountOnKt.div(new FP(1000000000000, 12)).toString(5)} KSM Collateral back into vault...`
+    `(4/4) Depositing ${ksmAmountOnKt.div(new FP(10**12)).toNumber(5)} KSM Collateral back into vault...`
   )
   const hash5 = await ktContext.depositCollateral(ksmAmountOnKt)
   await printSuccess('kintsugi', hash5.hash)
