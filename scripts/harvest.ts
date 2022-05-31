@@ -61,7 +61,7 @@ async function main() {
     console.error(e)
     throw new Error('error on step1')
   }
-
+  await sleep(6000)
   const swapAmount = await karContext.getKintFree()
   process.stdout.write(
     `(2/4) Swapping ${swapAmount.div(new FP(10 ** 12)).toNumber(5)} KINT for KSM....`
@@ -73,20 +73,23 @@ async function main() {
     console.error(e)
     throw new Error('error on step2')
   }
-  
+
   const bridgeBack= await karContext.getKsmFree()
   process.stdout.write(
     `(3/4) Bridging back ${bridgeBack.div(new FP(10**12)).toNumber(5)} KSM....`
   )
   const hash3 = await karContext.bridgeAllKsmToKint()
   await printSuccess("karura", hash3.hash)
-
+  
+  await sleep(6000)
   const ksmAmountOnKt = await ktContext.getKsmFree()
   process.stdout.write(
     `(4/4) Depositing ${ksmAmountOnKt.div(new FP(10**12)).toNumber(5)} KSM Collateral back into vault...`
   )
   const hash5 = await ktContext.depositCollateral(ksmAmountOnKt)
   await printSuccess('kintsugi', hash5.hash)
+
+  console.log(`✅  Collateral Ratio is now: ${await ktContext.getRatio()}%`)
 
   rl.close()
 }

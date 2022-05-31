@@ -18,8 +18,8 @@ async function main() {
   console.log('LP tokens owned: ', resp.toString())
 
   // calculate calculate value of dex shares (in kUSD and kBTC)
-  const resp7 = await karContext.getMySharesValueView()
-  console.log(`Total LP value: $${resp7}`)
+  const TotalLPValue = await karContext.getMySharesValueView()
+  console.log(`Total LP value: $${TotalLPValue}`)
 
   // calculate possible collateral values possible with current pools
   // work out how much ksm you can buy with staked amount
@@ -52,8 +52,8 @@ async function main() {
   const answer2 = await rl.question(
     `What ratio would you like to rebalance to? (` +
       colors.red('-0%') +
-      ` - ` +
-      colors.green(ratio.toNumber(1) + '%') +
+      ` <-> ` +
+      colors.green(ratio.toNumber(2) + '%') +
       `) `
   )
   const number = Number(answer2)
@@ -71,13 +71,38 @@ async function main() {
     console.error('Ratio requested is too high for LP available')
     throw new Error('Ratio too high')
   }
-  // work out how many shares to unstake: 1) convert ratio into KSM equivalent
-  // 2) convert ksm equivalent
-  // 3) unstake and withdraw those shares
-  // 4) convert into ksm
-  // 5) bridge ksm
-  // 6) deposit ksm as collateral
-  // 7) print out new collateral % you are
+
+  const ksmAmount = await ktContext.getCollateralFromRatio(number)
+  const ksmPrice = await karContext.getKsmPrice()
+  const ksmValue = ksmAmount.mul(ksmPrice)
+  const shares = (await karContext.getStakedLp()).balance
+  const totalVal = await karContext.getMySharesValue()
+  const valPerShare = totalVal.div(shares)
+  const sharesToWithdraw = new FP(ksmValue.toNumber(0), 0).div(valPerShare)
+  console.log('=============================')
+
+  process.stdout.write(`(1/4) Withdrawing ${sharesToWithdraw.div(new FP(10 ** 12)).toNumber(2)} staked LP shares ....`)
+  const hash1 = await karContext.withdrawLpShares(sharesToWithdraw)
+  await printSuccess('kintsugi', hash1.hash)
+
+  process.stdout.write(`(2/4) Swapping withdrawn shares for KSM....`)
+  const hash2 = await karContext.swapAllForKsm()
+  await printSuccess('karura', hash2.hash)
+
+  const bridgeBack = await karContext.getKsmFree()
+  process.stdout.write(`(3/4) Bridging back ${bridgeBack.div(new FP(10 ** 12)).toNumber(5)} KSM....`)
+  const hash3 = await karContext.bridgeAllKsmToKint()
+  await printSuccess('karura', hash3.hash)
+
+  await sleep(6000)
+  const ksmAmountOnKt = await ktContext.getKsmFree()
+  process.stdout.write(
+    `(4/4) Depositing ${ksmAmountOnKt.div(new FP(10 ** 12)).toNumber(5)} KSM Collateral back into vault...`
+  )
+  const hash5 = await ktContext.depositCollateral(ksmAmountOnKt)
+  await printSuccess('kintsugi', hash5.hash)
+
+  console.log(`✅  Collateral Ratio is now: ${await ktContext.getRatio()}%`)
 }
 
 main()

@@ -6,7 +6,6 @@ import { FixedPointNumber, FixedPointNumber as FP } from '@acala-network/sdk-cor
 import { kusd, kint, ksm, kbtc, kar, kusdKbtcDexshare } from '../static/tokens'
 import { setupKeys, printPercentages, submitTx } from './helpers'
 
-
 export const kusamaApi = async () => {
   const wsProvider = new WsProvider('wss://kusama.api.onfinality.io/public-ws')
   const api = await ApiPromise.create({ provider: wsProvider })
@@ -68,7 +67,7 @@ export const setupKarura = async () => {
     const kintPrice = respKint[0] / respKint[1]
     const ksmPrice = respKsm[0] / respKsm[1]
 
-    return fp ? new FP(kintPrice / ksmPrice) :Number(kintPrice / ksmPrice).toFixed(5)
+    return fp ? new FP(kintPrice / ksmPrice) : Number(kintPrice / ksmPrice).toFixed(5)
   }
 
   const getMyShares = async () => {
@@ -99,12 +98,23 @@ export const setupKarura = async () => {
     return tokenAAmount.add(tokenBAmount)
   }
 
+  const getShareValue = async (tokenA = kusd, tokenB = kbtc) => {
+    // const tokenBPrice = await getDexPrice(kusd, tokenB)
+    // const tokenBAmount = myTokenB.mul(tokenBPrice)
+    // return tokenAAmount.add(tokenBAmount)
+  }
+
   const getMySharesInKsm = async () => {
     const mySharesValue = await getMySharesValue()
     const ksmPool = (await api.query.dex.liquidityPool([kusd, ksm])).toJSON()!
     const ksmPrice = new FP(ksmPool[0].toString()).div(new FP(ksmPool[1].toString()))
     const ksmReceived = mySharesValue.div(ksmPrice)
     return ksmReceived
+  }
+
+  const getSharesFromKsm = async () => {
+    const ksmPool = (await api.query.dex.liquidityPool([kusd, ksm])).toJSON()!
+    const ksmPrice = new FP(ksmPool[0].toString()).div(new FP(ksmPool[1].toString()))
   }
 
   const getMySharesInKsmView = async () => {
@@ -127,6 +137,11 @@ export const setupKarura = async () => {
     return price
   }
 
+  const getKsmPrice = async () => {
+    const price = await getDexPrice(kusd, ksm)
+    return price
+  }
+
   const getStakedLp = async () => {
     const resp = await api.query.rewards.sharesAndWithdrawnRewards({ Dex: kusdKbtcDexshare }, address)
     const json = resp.toJSON()!
@@ -135,6 +150,12 @@ export const setupKarura = async () => {
   }
 
   const getStakedLpBalance = async () => {
+    const resp = (await getStakedLp()).balance
+    const bal = resp.div(new FP(10 ** 12))
+    return bal
+  }
+
+  const getStakedLpBalanceView = async () => {
     const resp = (await getStakedLp()).balance
     const bal = resp.div(new FP(10 ** 12))
     return bal
@@ -185,7 +206,7 @@ export const setupKarura = async () => {
 
   // bridge from kintsugi
 
-  const bridgeAllKsmToKint = async () =>{
+  const bridgeAllKsmToKint = async () => {
     const amount = await getKsmFree()
     const txn = api.tx.xTokens.transfer(ksm, amount.toString(), destinationKintsugi, 5000000000)
     const details = await submitTx(txn, signer)
@@ -228,14 +249,33 @@ export const setupKarura = async () => {
     const txn = api.tx.dex.swapWithExactSupply([kint, kusd, ksm], amount.toString(), 0)
     return txn
   }
-   const swapAllKintForKsm = async () => {
-       const kintBalance = await getKintFree()
-       const kintAsKsm = kintBalance.mul(await getKsmKintPrice(true)as FixedPointNumber)
-       const tx = api.tx.dex.swapWithExactSupply([kint, kusd,ksm], kintBalance.toString(), kintAsKsm.mul(new FP(0.98)).toNumber(0))
-       const details = await submitTx(tx,signer)
+  const swapAllKintForKsm = async () => {
+    const kintBalance = await getKintFree()
+    const kintAsKsm = kintBalance.mul((await getKsmKintPrice(true)) as FixedPointNumber)
+    const tx = api.tx.dex.swapWithExactSupply(
+      [kint, kusd, ksm],
+      kintBalance.toString(),
+      kintAsKsm.mul(new FP(0.98)).toNumber(0)
+    )
+    const details = await submitTx(tx, signer)
 
-       return details
-   }
+    return details
+  }
+
+  const swapAllForKsm = async () => {
+    const resp = (await api.query.tokens.accounts(address, kbtc)) as any
+    const kbtcBal = resp.free.toString()
+    const min1 = Number(resp.free) * 0.95 // TODO - add price in KSM for accurate min
+    const resp2 = (await api.query.tokens.accounts(address, kusd)) as any
+    const kusdBal = resp2.free.toString()
+    const min2 = Number(resp2.free) * 0.95 // TODO - add price in KSM for accurate min
+    const txns = [
+      api.tx.dex.swapWithExactSupply([kbtc, kusd, ksm], kbtcBal, 0),
+      api.tx.dex.swapWithExactSupply([kusd, ksm], kusdBal, 0),
+    ]
+    const details = submitBatch(txns)
+    return details
+  }
 
   const swapKintForKsmAction = async (amount: FixedPointNumber) => {
     const txn = api.tx.dex.swapWithExactSupply([kint, kusd, kar, ksm], amount.toString(), 0)
@@ -249,12 +289,22 @@ export const setupKarura = async () => {
     return details
   }
 
+  const withdrawLpShares = async (shares: FixedPointNumber) => {
+    const txns = [
+      api.tx.incentives.withdrawDexShare({ DexShare: [kusd, kbtc] }, shares.toString()),
+      api.tx.dex.removeLiquidity(kusd, kbtc, shares.toString(), 0, 0, false),
+    ]
+    const details = await submitBatch(txns)
+    return details
+  }
+
   return {
     api,
     printStats,
     getKarBalance,
     getKsmFree,
     getKsmKintPrice,
+    getKsmPrice,
     getDexPrices,
     getPoolDepth,
     getMyShares,
@@ -266,13 +316,16 @@ export const setupKarura = async () => {
     getStakedLp,
     getTokensPerShare,
     getStakedLpBalance,
+    getStakedLpBalanceView,
     bridgeAllKsmToKint,
     bridgeToKint,
     bridgeToKusama,
     getKintFree,
     swapAllKintForKsm,
+    swapAllForKsm,
     swapKintForKsm,
     submitBatch,
+    withdrawLpShares,
     getTotalDexShares,
   }
 }
