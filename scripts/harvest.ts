@@ -6,7 +6,7 @@ const readline = require('node:readline/promises')
 import { stdin as input, stdout as output } from 'node:process'
 import { FixedPointNumber as FP } from '@acala-network/sdk-core'
 
-async function main() {
+export async function harvest() {
   const ktContext = await setupKintsugi()
   await ktContext.printStats()
   const karContext = await setupKarura()
@@ -94,10 +94,10 @@ async function main() {
   rl.close()
 }
 
-main()
-  .catch((err) => {
-    console.error('Error: ', Object.entries(err as object), err)
-  })
-  .finally(() => {
-    process.exit()
-  })
+// harvest()
+//   .catch((err) => {
+//     console.error('Error: ', Object.entries(err as object), err)
+//   })
+//   .finally(() => {
+//     process.exit()
+//   })

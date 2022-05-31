@@ -8,7 +8,7 @@ import { setupKintsugi } from '../utils/kintsugi'
 import { setupKarura } from '../utils/karura'
 var colors = require('colors')
 
-async function main() {
+export async function rebalance() {
   const ktContext = await setupKintsugi()
   await ktContext.printStats()
   const karContext = await setupKarura()
@@ -105,10 +105,10 @@ async function main() {
   console.log(`✅  Collateral Ratio is now: ${await ktContext.getRatio()}%`)
 }
 
-main()
-  .catch((err) => {
-    console.error('Error: ', Object.entries(err as object), err)
-  })
-  .finally(() => {
-    process.exit()
-  })
+// rebalance()
+//   .catch((err) => {
+//     console.error('Error: ', Object.entries(err as object), err)
+//   })
+//   .finally(() => {
+//     process.exit()
+//   })

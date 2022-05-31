@@ -4,7 +4,7 @@ import { stdin as input, stdout as output } from 'node:process'
 import { setupKintsugi } from '../utils/kintsugi'
 var readline = require('node:readline/promises')
 
-async function main() {
+export async function mint() {
   const context = await setupKintsugi()
   await context.printStats()
 
@@ -51,10 +51,10 @@ async function main() {
   rl.close()
 }
 
-main()
-  .catch((err) => {
-    console.error('Error: ', Object.entries(err as object), err)
-  })
-  .finally(() => {
-    process.exit()
-  })
+// mint()
+//   .catch((err) => {
+//     console.error('Error: ', Object.entries(err as object), err)
+//   })
+//   .finally(() => {
+//     process.exit()
+//   })

@@ -1,15 +1,8 @@
 ## Description
 > :warning: Use at own risk, no responsibility taken for loss of funds!
 >
-This is a self minting script for kintsugi vault operators to submit issue requests against their own vault whilst keeping it closed to outsiders.
+This is a collection of scripts for *Kintsugi Vault Operators* to better help them automate the process of maintaining the collateral levels of their vault.
 
-Often when opening your vault, participants will initiate issue requests which will never complete. This is not only annoying having to wait 1-2 days for them to expire, and during this time it can be very capital efficient.
-
-This script will submit an atomic batched transaction which will:
-
-1. Open the vault
-2. Submit an issue request
-3. Close the vault
 
 ## Pre-requisites
 

@@ -82,3 +82,56 @@ export const calcPercentages = (num1: number, num2: number) => {
 
   return percent
 }
+
+export const printIntro = () => {
+  let string = `                                                            
+                                                    ,/&&&&&&&&&&&&&&&&(         
+                                     #&&&&&&&&&&(.      .   .     .  . .&&      
+                          /&&&&&&&#.   .                             &&&/       
+                  %&&&&&% . .                                  %&&&&..          
+            &&&&&. .                                   #&&&&&&...               
+        &&&(.                               .#&&&&&&&(                          
+       &&&.                .. (&&&&&&&&&&&/                                     
+         . /&&&&&&&&&&&&#*..                                                    
+                                  .,,,,&&&&&&&&.                                
+                              ,&****&&&&&&&**&&&&&&                             
+                            #&&&/&&&//////&&&&&&&&&&&/                          
+                          /&&&//////&&&&&&&&&&&&&&&&&&&.                        
+                         *&/&&&&&%/////%&&&&&&&&&&&&&&&&                        
+                         &&&&&&&&&&&&&&&&********&&%&&&*&                       
+                         &&&&&&&&&&&&&&,*,%&&&&,,&&&&&&&&                       
+                         &&&&&&#,,,,,#&&&&&&&&&*&&&&&&&&&                       
+                         ,&%,,,*&&&&&&&&&&&&&&&&,&&&&&&&.                       
+                          .&&&*****&&*%&&&&&&&&&&&*/&&&                         
+                           .&&&&&///&&&&&&##//////%/&.                          
+                               &&&&&%&&&&&&&&&&&&&&                             
+                                   #&&/&&&&&&&/                                 
+                                              .      .,(%&&&&&&&&&&&&(.         
+                                      %&&&&&&&&&&&,...  . .   .. .    .%&&      
+                           #&&&&&&&/                                 %&&% .     
+                  ,&&&&&&*.                                    ,&&&&%.          
+            (&&&&/. .                                   &&&&&&*                 
+        #&&&                                 ,%&&&&&&&,                         
+       &&.                    .,&&&&&&&&&&&/.                                   
+        . /&&&&&&&&&&&&&&&#,.`
+        
+ string = string.concat(colors.green(`
+ ============================ KT VAULT RUNNER ==============================
+ by timbotronic
+ https://github.com/timbotro/kt-vault-runner \n\n`) )
+ string = string.concat(colors.yellow(`Options:
+  1.) Self-Mint: Submit kBTC issue request against your own vault whilst keeping 
+                it shut to outsiders.
+
+  2.) Harvest: Harvest any KINT earnt as rewards, bridge to Karura to swap it for 
+              KSM, bridge back to Kintsugi to deposit it as collateral.
+
+  3.) Rebalance: Turn any aUSD/kBTC LP tokens directly into KSM and deposit it
+                as additional vault collateral.`))      
+
+
+
+
+  
+  console.log(string)
+}
