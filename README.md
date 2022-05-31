@@ -13,9 +13,10 @@ This script will submit an atomic batched transaction which will:
 
 ## Pre-requisites
 
-1. Kintsugi vault
+1. Kintsugi vault fully set up
 2. KINT balance in your vault
 3. Seed phrase of your vault
+4. (for some scripts) Free KAR balance on Karura chain
 
 ## Installation
 1. Create a local seedphrase file somewhere on your filesystem: e.g. `mkdir ~/.private && touch ~/.private/seed.txt && vim ~/.private/seed.txt`
@@ -26,11 +27,14 @@ This script will submit an atomic batched transaction which will:
 6. Install libraries with `yarn`
 
 
-## Usage
+## Scripts Added
 :question: Are you sure you wish to take the risk? Be sure to ask around the Discord channel if you are wary.
 
 - For self issuance workflow: `yarn run:mint`
 - For harvest & compound workflow: `yarn run:harvest`
+- For rebalancing vault with LP: `yarn run:rebalance`
+- For targetted premium redeems: *COMING SOON*
+
 
 Enjoy!
 
@@ -85,7 +89,3 @@ No. The current version uses many hardcoded values specifically for Kintsugi onl
 
 ### Is there a read-only mode so that I don't have to reveal my seed phrase?
 I haven't built that feature yet. However you can quite easily see these stats on your corresponding vault dashboard
-
-### What is up with the number precisions used here? Why do you keep truncating DPs?
-This is to increase readability at the expense of 100% precision in working out how much BTC you need. This was for my sanity but you will not be able to get true 260% collateralisation utilization.
-No money will be lost through the imprecision, this just affects how close to 260% you get to.
