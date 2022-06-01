@@ -1,12 +1,11 @@
 import { sleep } from '../utils/helpers'
 import { printSuccess } from '../utils/fetch'
-const readline = require('node:readline/promises')
-import { stdin as input, stdout as output } from 'node:process'
 import { FixedPointNumber as FP } from '@acala-network/sdk-core'
 import { kar, ksm } from '../static/tokens'
 import { setupKintsugi } from '../utils/kintsugi'
 import { setupKarura } from '../utils/karura'
 var colors = require('colors')
+var rl = require('readline-sync');
 
 export async function rebalance() {
   const ktContext = await setupKintsugi()
@@ -34,7 +33,7 @@ export async function rebalance() {
 
   ////// Execution
 
-  const rl = readline.createInterface({ input, output })
+//   const rl = readline.createInterface({ input, output })
   const answer1 = await rl.question('Would you like to proceed with rebalancing the vault with staked LP? (yes/no) ')
   switch (answer1) {
     case 'yes':
@@ -103,12 +102,5 @@ export async function rebalance() {
   await printSuccess('kintsugi', hash5.hash)
 
   console.log(`✅  Collateral Ratio is now: ${await ktContext.getRatio()}%`)
-}
 
-// rebalance()
-//   .catch((err) => {
-//     console.error('Error: ', Object.entries(err as object), err)
-//   })
-//   .finally(() => {
-//     process.exit()
-//   })
+}

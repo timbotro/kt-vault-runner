@@ -1,6 +1,9 @@
 import 'dotenv/config'
 import { ApiPromise, Keyring } from '@polkadot/api'
 import { payments } from 'bitcoinjs-lib'
+import { harvest } from '../scripts/harvest'
+import { mint } from '../scripts/mint'
+import { rebalance } from '../scripts/rebalance'
 var fs = require('sudo-fs-promise')
 var colors = require('colors')
 
@@ -114,24 +117,52 @@ export const printIntro = () => {
         #&&&                                 ,%&&&&&&&,                         
        &&.                    .,&&&&&&&&&&&/.                                   
         . /&&&&&&&&&&&&&&&#,.`
-        
- string = string.concat(colors.green(`
+
+  string = string.concat(
+    colors.green(`
  ============================ KT VAULT RUNNER ==============================
  by timbotronic
- https://github.com/timbotro/kt-vault-runner \n\n`) )
- string = string.concat(colors.yellow(`Options:
-  1.) Self-Mint: Submit kBTC issue request against your own vault whilst keeping 
-                it shut to outsiders.
+ https://github.com/timbotro/kt-vault-runner \n\n`)
+  )
 
-  2.) Harvest: Harvest any KINT earnt as rewards, bridge to Karura to swap it for 
-              KSM, bridge back to Kintsugi to deposit it as collateral.
-
-  3.) Rebalance: Turn any aUSD/kBTC LP tokens directly into KSM and deposit it
-                as additional vault collateral.`))      
-
-
-
-
-  
   console.log(string)
+}
+
+export const printChoices = () =>{
+  const string = colors.yellow(`Choices:
+  1.) Self-Mint:   Submit kBTC issue request against your own vault whilst keeping 
+                   it shut to outsiders.
+
+  2.) Harvest:     Harvest any KINT earnt as rewards, bridge to Karura to swap it for 
+                   KSM, bridge back to Kintsugi to deposit it as collateral.
+
+  3.) Rebalance:   Turn any aUSD/kBTC LP tokens directly into KSM and deposit it
+                   as additional vault collateral.
+                
+  4.) Quit
+                `)
+  console.log(string)
+}
+
+export const chooser = async (answer) => {
+  const number = Number(answer)
+  switch (number) {
+    case 1:
+      await mint()
+      break
+    case 2:
+      await harvest()
+      break
+    case 3:
+      await rebalance()
+      break
+    case 4:
+      console.log('Goodbye. 👋')
+      return true
+    default:
+      console.error(`⚠️ Invalid yes/no response entered: ${answer} \n Aborting.`)
+      throw new Error('Invalid user answer')
+  }
+
+  return false
 }

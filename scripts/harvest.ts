@@ -2,9 +2,8 @@ import { sleep } from '../utils/helpers'
 import { setupKintsugi } from '../utils/kintsugi'
 import { setupKarura } from '../utils/karura'
 import { printSuccess } from '../utils/fetch'
-const readline = require('node:readline/promises')
-import { stdin as input, stdout as output } from 'node:process'
 import { FixedPointNumber as FP } from '@acala-network/sdk-core'
+var rl = require('readline-sync');
 
 export async function harvest() {
   const ktContext = await setupKintsugi()
@@ -15,7 +14,7 @@ export async function harvest() {
   const ksmHarvest = Number(kintHarvest) * Number(await karContext.getKsmKintPrice())
   await karContext.printStats(kintHarvest, ksmHarvest)
 
-  const rl = readline.createInterface({ input, output })
+  // const rl = readline.createInterface({ input, output })
   const answer1 = await rl.question(
     `Would you like to proceed with harvesting, bridging, swapping and depositing? (yes/no) `
   )
@@ -90,14 +89,4 @@ export async function harvest() {
   await printSuccess('kintsugi', hash5.hash)
 
   console.log(`✅  Collateral Ratio is now: ${await ktContext.getRatio()}%`)
-
-  rl.close()
 }
-
-// harvest()
-//   .catch((err) => {
-//     console.error('Error: ', Object.entries(err as object), err)
-//   })
-//   .finally(() => {
-//     process.exit()
-//   })

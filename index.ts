@@ -1,26 +1,15 @@
-import { printIntro } from './utils/helpers'
-import { stdin as input, stdout as output } from 'node:process'
-import { harvest } from './scripts/harvest'
-import { mint } from './scripts/mint'
-import { rebalance } from './scripts/rebalance'
-
-var readline = require('node:readline/promises')
+import { printIntro, chooser, printChoices } from './utils/helpers'
+var readlineSync = require('readline-sync')
+var colors = require('colors')
 
 async function main() {
   printIntro()
 
-  const rl = readline.createInterface({ input, output })
-  const answer1 = await rl.question(`Please select an option (1-3):>  `)
-  const number = Number(answer1)
-  rl.close()
+  while (true) {
+    printChoices()
 
-  switch (number) {
-    case 1:
-      await mint()
-      break
-    default:
-      console.error(`⚠️ Invalid yes/no response entered: ${answer1} \n Aborting.`)
-      throw new Error('Invalid user answer')
+    var choice = readlineSync.question(colors.orange(`Please select an option (1-4):>  `))
+    if (await chooser(choice)) break
   }
 }
 

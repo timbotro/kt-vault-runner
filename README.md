@@ -19,15 +19,19 @@ This is a collection of scripts for *Kintsugi Vault Operators* to better help th
 5. Replace seed path with absolute path to file created in step1
 6. Install libraries with `yarn`
 
+## Usage
+
+```
+yarn start
+```
 
 ## Scripts Added
 :question: Are you sure you wish to take the risk? Be sure to ask around the Discord channel if you are wary.
 
-- For self issuance workflow: `yarn run:mint`
-- For harvest & compound workflow: `yarn run:harvest`
-- For rebalancing vault with LP: `yarn run:rebalance`
+- For self issuance workflow
+- For harvest & compound workflow
+- For rebalancing vault with LP
 - For targetted premium redeems: *COMING SOON*
-
 
 Enjoy!
 
@@ -78,7 +82,7 @@ You can see exactly where how it is used in: `utils/helpers.ts::line24`
 ```
 
 ### Will this work for interlay vaults?
-No. The current version uses many hardcoded values specifically for Kintsugi only. This may change in the future
+No. The current version uses many hardcoded values specifically for Kintsugi only. This may change in the future.
 
-### Is there a read-only mode so that I don't have to reveal my seed phrase?
-I haven't built that feature yet. However you can quite easily see these stats on your corresponding vault dashboard
+### Will this work for vaults with non-KSM collaterals?
+No. However, no reason why this can't change in the future.

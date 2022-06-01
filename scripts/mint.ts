@@ -1,14 +1,13 @@
 import { parseResponse } from '../utils/helpers'
 import { printSuccess } from '../utils/fetch'
-import { stdin as input, stdout as output } from 'node:process'
 import { setupKintsugi } from '../utils/kintsugi'
-var readline = require('node:readline/promises')
+var rl = require('readline-sync');
 
 export async function mint() {
   const context = await setupKintsugi()
   await context.printStats()
 
-  const rl = readline.createInterface({ input, output })
+  // const rl = readline.createInterface({ input, output })
   const answer1 = await rl.question('Would you like to proceed with submitting a self-mint issue request? (yes/no) ')
   switch (answer1) {
     case 'yes':
@@ -48,13 +47,4 @@ export async function mint() {
   console.log(`🔏 Destination vault address: ${vaultBtcAddress}`)
   console.log(`💳 Amount to send: ${(amount as number) / 10 ** 8} kBTC`)
 
-  rl.close()
 }
-
-// mint()
-//   .catch((err) => {
-//     console.error('Error: ', Object.entries(err as object), err)
-//   })
-//   .finally(() => {
-//     process.exit()
-//   })
