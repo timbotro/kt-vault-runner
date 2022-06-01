@@ -89,4 +89,5 @@ export async function harvest() {
   await printSuccess('kintsugi', hash5.hash)
 
   console.log(`✅  Collateral Ratio is now: ${await ktContext.getRatio()}%`)
+  await rl.question('<< Action Complete. Press Enter to return to menu >>')
 }

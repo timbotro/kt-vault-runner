@@ -47,4 +47,10 @@ export async function mint() {
   console.log(`🔏 Destination vault address: ${vaultBtcAddress}`)
   console.log(`💳 Amount to send: ${(amount as number) / 10 ** 8} kBTC`)
 
+  while (true){
+    const answer = await rl.question('Have you written the above down? (yes/no)')
+    if (answer == "yes" || "YES" || "Yes") break
+  }
+
+  await rl.question('<< Action Complete. Press Enter to return to menu >>')
 }
