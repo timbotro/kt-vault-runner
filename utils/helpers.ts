@@ -4,6 +4,7 @@ import { payments } from 'bitcoinjs-lib'
 import { harvest } from '../scripts/harvest'
 import { mint } from '../scripts/mint'
 import { rebalance } from '../scripts/rebalance'
+import { getCgPrice, getKarStatsPrice } from '../utils/fetch'
 var fs = require('sudo-fs-promise')
 var colors = require('colors')
 
@@ -119,17 +120,31 @@ export const printIntro = () => {
         . /&&&&&&&&&&&&&&&#,.`
 
   string = string.concat(
-    colors.green(`
- ============================ KT VAULT RUNNER ==============================
- by timbotronic
+    colors
+      .green(
+        `
+ ============================ KT VAULT RUNNER ==============================`
+      )
+      .concat(
+        colors
+          .rainbow(
+            `
+ by timbotronic`
+          )
+          .concat(
+            colors.rainbow(`
  https://github.com/timbotro/kt-vault-runner \n\n`)
+          )
+      )
   )
 
   console.log(string)
 }
 
-export const printChoices = () =>{
+export const printChoices = () => {
   const string = colors.yellow(`Choices:
+  0.) Refresh:     Refresh this page.
+
   1.) Self-Mint:   Submit kBTC issue request against your own vault whilst keeping 
                    it shut to outsiders.
 
@@ -147,6 +162,8 @@ export const printChoices = () =>{
 export const chooser = async (answer) => {
   const number = Number(answer)
   switch (number) {
+    case 0:
+      break
     case 1:
       await mint()
       break
@@ -165,4 +182,23 @@ export const chooser = async (answer) => {
   }
 
   return false
+}
+
+export const printDash = async () => {
+  await Promise.all([
+    getCgPrice('kusama'),
+    getKarStatsPrice('KSM'),
+    getCgPrice('kintsugi'),
+    getKarStatsPrice('KINT'),
+    getCgPrice('bitcoin'),
+    getKarStatsPrice('BTC'),
+  ]).then((prices) => {
+    const table = {
+      KSM: { CoinGeckoPrice: prices[0], 'Karura Stats Price': prices[1] },
+      KINT: { CoinGeckoPrice: prices[2], 'Karura Stats Price': prices[3] },
+      BTC: { CoinGeckoPrice: prices[4], 'Karura Stats Price': prices[5] },
+    }
+    console.table(table)
+    console.log(colors.random('\n==========================================================='))
+  })
 }

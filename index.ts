@@ -1,4 +1,4 @@
-import { printIntro, chooser, printChoices } from './utils/helpers'
+import { printDash, printIntro, chooser, printChoices } from './utils/helpers'
 var readlineSync = require('readline-sync')
 var colors = require('colors')
 
@@ -6,9 +6,10 @@ async function main() {
   printIntro()
 
   while (true) {
+    await printDash()
     printChoices()
 
-    var choice = readlineSync.question(colors.orange(`Please select an option (1-4):>  `))
+    var choice = readlineSync.question(colors.brightGreen(`Please select an option (0-4):>  `))
     if (await chooser(choice)) break
   }
 }
