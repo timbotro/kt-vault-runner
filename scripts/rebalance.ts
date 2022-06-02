@@ -4,8 +4,8 @@ import { FixedPointNumber as FP } from '@acala-network/sdk-core'
 import { kar, ksm } from '../static/tokens'
 import { setupKintsugi } from '../utils/kintsugi'
 import { setupKarura } from '../utils/karura'
+import { rebalanceQ1, rebalanceQ2, confirmMessage } from '../utils/inquirer'
 var colors = require('colors')
-var rl = require('readline-sync')
 
 export async function rebalance() {
   const ktContext = await setupKintsugi()
@@ -30,46 +30,15 @@ export async function rebalance() {
       colors.green(`+${ratio.toNumber(2)}% `)
   )
 
-  const answer1 = await rl.question('❓ Would you like to proceed with rebalancing the vault with staked LP? (yes/no) ')
-  switch (answer1) {
-    case 'yes':
-      break
-    case 'no':
-      console.log('Goodbye. 👋')
-      return
-      break
-    default:
-      console.error(`⚠️ Invalid yes/no response entered: ${answer1} \n Aborting.`)
-      throw new Error('Invalid user answer')
+
+  const answer1 = await rebalanceQ1()
+  if (!answer1.rebalanceIntro) {
+    console.log('Goodbye. 👋')
+    return
   }
 
-  const answer2 = await rl.question(
-    `❓ What collateral ratio would you like to rebalance? (` +
-      colors.red(`${negRatio}%`) +
-      ` <-> ` +
-      colors.green(`+${ratio.toNumber(2)}%`) +
-      `) `
-  )
-  const number = Number(answer2)
-  if (!number) {
-    console.error('Answer given is not a valid decimal number')
-    throw new Error('Invalid ratio input')
-  }
-
-  if (number == 0) {
-    console.error('0% Ratio means no action needed')
-    throw new Error('Ratio is zero')
-  }
-
-  if (number < Number(negRatio)) {
-    console.error('Ratio requested is too low for free collateral available')
-    throw new Error('Ratio too low')
-  }
-
-  if (number > ratio.toNumber()) {
-    console.error('Ratio requested is too high for LP available')
-    throw new Error('Ratio too high')
-  }
+  const answer2 = await rebalanceQ2(negRatio,ratio)
+  const number = Number(answer2.rebalanceInput)
   console.log('=============================')
 
   if (number > 0) {
@@ -116,5 +85,5 @@ export async function rebalance() {
 
   console.log('=============================')
   console.log(`✅  Collateral Ratio is now: ${await ktContext.getRatio()}%`)
-  await rl.question('<< Action Complete. Press Enter to return to menu >>')
+  await confirmMessage()
 }

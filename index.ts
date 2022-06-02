@@ -1,7 +1,7 @@
 import { printDash, printIntro, chooser, printChoices } from './utils/helpers'
 import chalk from 'chalk'
+import { mainMenu } from './utils/inquirer'
 import clear from 'clear'
-// var figlet = require('figlet');
 var readlineSync = require('readline-sync')
 var colors = require('colors')
 
@@ -10,10 +10,8 @@ async function main() {
     clear()
     printIntro()
     await printDash()
-    printChoices()
-
-    var choice = readlineSync.question(chalk.bgBlack.greenBright.bold(`Please select an option (0-4):> `))
-    if (await chooser(choice)) break
+    const answer = await mainMenu()
+    if (await chooser(answer.menuChoice)) break
   }
 }
 
