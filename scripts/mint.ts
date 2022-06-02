@@ -2,7 +2,6 @@ import { parseResponse } from '../utils/helpers'
 import { printSuccess } from '../utils/fetch'
 import { setupKintsugi } from '../utils/kintsugi'
 import { mintQ1, mintQ3, confirmMessage, mintQ2 } from '../utils/inquirer'
-var rl = require('readline-sync')
 
 export async function mint() {
   const context = await setupKintsugi()

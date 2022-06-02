@@ -1,9 +1,6 @@
-import { printDash, printIntro, chooser, printChoices } from './utils/helpers'
-import chalk from 'chalk'
+import { printDash, printIntro, chooser } from './utils/helpers'
 import { mainMenu } from './utils/inquirer'
 import clear from 'clear'
-var readlineSync = require('readline-sync')
-var colors = require('colors')
 
 async function main() {
   while (true) {
