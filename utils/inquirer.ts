@@ -84,10 +84,9 @@ export const harvestQ2 = (max) => {
         name: 'harvestInput',
         type: 'number',
         default: 1,
-        message: `How much KINT would you like to harvest and convert to KSM? (min:1 | max: ${max}) `,
+        message: `How much KINT would you like to harvest and convert to KSM? (min:1 | max: ${max.toFixed(2)}) `,
         filter(val){
-            // console.log(val)
-            if (val < 10) throw Error("Harvest amount entered too small")
+            if (val < 1) throw Error("Harvest amount entered too small")
             if (val > max) throw Error("Harvest amount exceeds maximum")
             return val
         }

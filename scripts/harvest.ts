@@ -25,7 +25,7 @@ export async function harvest() {
     console.error(`Insufficient amount to bridge and convert, only ${kintHarvest + ktAmount} KINT free`)
     throw new Error('Insufficient harvest')
   }
-  const max = (Number(kintHarvest) + Number(ktAmount) - 1).toFixed(2)
+  const max = (Number(kintHarvest) + Number(ktAmount) - 1)
   const answer2 = await harvestQ2(max)
 
   console.log('=============================')
