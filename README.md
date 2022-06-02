@@ -103,3 +103,6 @@ No. The current version uses many hardcoded values specifically for Kintsugi onl
 
 ### Will this work for vaults with non-KSM collaterals?
 No. However, no reason why this can't change in the future.
+
+### I love this project! How can I say thanks?
+Feel free to leave me a star, say thanks at timbotron@proton.me or send a donation to `5CG4HhBwRetoBVCgtW38MkkjYrfJehwu6Poe1qMQvHzmQzfk`
