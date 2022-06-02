@@ -14,7 +14,7 @@ To encourage decentralization, the network should attract high quantities of sma
 Smaller VOs, however, may not have the luxury of delegated funds and so will operate in a more self-interested fashion. 
 This CLI application is designed to service these VOs and help to manage exposures to multiple crypto assets.
 
-Second only to liveness, the a VO's key responsibility is to manage the ratio between collateral and issued kBTC. 
+Second only to liveness, the VO's key responsibility is to manage the ratio between the value of the collateral versus the value of issued kBTC. 
 This means the monitoring the markets and reacting to the changing volatile price of not only KBTC but also the collateral asset (e.g. KSM).
 This application allows for full automation of: self-issuing, harvesting rewards and farming BTC. 
 The goal here is to make running small VOs far more attractive and thus increase network issuance whilst maintaining decentralization.
