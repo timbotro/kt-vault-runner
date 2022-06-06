@@ -6,6 +6,7 @@
 |Hackathon|[amsterDOT Hack](https://dorahacks.io/hackathon/22/detail)|
 |Bounty Name|[Interlay: VAULT INTERFACE](https://github.com/interlay/bounties/issues/1) |
 |Summary| CLI application for Kintsugi Vault operators to automate tasks.|
+|Website| https://vault-runner.smoothbrains.ltd/ |
 |Video Link| [youtube](http://www.youtube.com)|
 
 ### Full Description
