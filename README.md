@@ -7,7 +7,7 @@
 |Bounty Name|[Interlay: VAULT INTERFACE](https://github.com/interlay/bounties/issues/1) |
 |Summary| CLI application for Kintsugi Vault operators to automate tasks.|
 |Website| https://vault-runner.smoothbrains.ltd/ |
-|Video Link| [youtube](http://www.youtube.com)|
+|Video Link| [youtube](https://youtu.be/86Rn3SFJOrs)|
 
 ### Full Description
 The dream of Kintsugi is to have the most decentralized wrapped BTC token, that is fully insured by collateral. 
