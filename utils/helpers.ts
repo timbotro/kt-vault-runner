@@ -15,13 +15,21 @@ export const setupKeys = async (api: ApiPromise) => {
 
   await fs
     .readFile(process.env.SEED_PATH)
-    .then((data) => (signer = keyring.addFromMnemonic(data.toString().replace('\n', ''))))
-    .catch((err) => {
+    .then(
+      (data: { toString: () => string }) =>
+        (signer = keyring.addFromMnemonic(data.toString().replace('\n', '')))
+    )
+    .catch((err: any) => {
       console.error('err:', err)
       throw new Error('Problem reading seed phrase file')
     })
 
-  return { ss58Prefix, keyring, signer, address: keyring.encodeAddress(signer.publicKey, ss58Prefix as number) }
+  return {
+    ss58Prefix,
+    keyring,
+    signer,
+    address: keyring.encodeAddress(signer.publicKey, ss58Prefix as number),
+  }
 }
 
 export async function sleep(ms: number): Promise<void> {
@@ -50,11 +58,18 @@ export const submitTx = async (tx, signer) => {
   let details
   console.log('Txns built. Waiting...')
   let promise = new Promise(async (resolve, reject) => {
-    const unsub = await tx.signAndSend(signer, { nonce: -1 }, ({ events = [], status }) => {
-      if (status.isInBlock) console.log(`Txns in unfinalized block: ${status.asInBlock} waiting...`)
-      if (status.isDropped) reject('Block has been dropped!')
-      if (status.isFinalized) resolve({ events, hash: status.asFinalized })
-    })
+    const unsub = await tx.signAndSend(
+      signer,
+      { nonce: -1 },
+      ({ events = [], status }) => {
+        if (status.isInBlock)
+          console.log(
+            `Txns in unfinalized block: ${status.asInBlock} waiting...`
+          )
+        if (status.isDropped) reject('Block has been dropped!')
+        if (status.isFinalized) resolve({ events, hash: status.asFinalized })
+      }
+    )
   })
 
   await promise
@@ -178,7 +193,9 @@ export const chooser = async (answer) => {
       console.log('Goodbye. 👋')
       return true
     default:
-      console.error(`⚠️ Invalid yes/no response entered: ${answer} \n Aborting.`)
+      console.error(
+        `⚠️ Invalid yes/no response entered: ${answer} \n Aborting.`
+      )
       throw new Error('Invalid user answer')
   }
 
@@ -200,6 +217,10 @@ export const printDash = async () => {
       BTC: { 'CoinGecko Price': prices[4], 'Karura Price': prices[5] },
     }
     console.table(table)
-    console.log(colors.random('\n============================================================================'))
+    console.log(
+      colors.random(
+        '\n============================================================================'
+      )
+    )
   })
 }
