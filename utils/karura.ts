@@ -3,8 +3,9 @@ import { ApiPromise, WsProvider, Keyring } from '@polkadot/api'
 import { getCgPrice } from '../utils/fetch'
 import { options } from '@acala-network/api'
 import { FixedPointNumber, FixedPointNumber as FP } from '@acala-network/sdk-core'
-import { kusd, kint, ksm, kbtc, kar, kusdKbtcDexshare } from '../static/tokens'
+import { kusd, kint, lksm, ksm, kbtc, kar, kusdKbtcDexshare } from '../static/tokens'
 import { setupKeys, printPercentages, submitTx } from './helpers'
+import { sign } from 'crypto'
 
 export const kusamaApi = async () => {
   const wsProvider = new WsProvider('wss://kusama.api.onfinality.io/public-ws')
@@ -262,18 +263,41 @@ export const setupKarura = async () => {
     return details
   }
 
-  const swapAllForKsm = async () => {
+  const getKbtcBal = async ()=>{
     const resp = (await api.query.tokens.accounts(address, kbtc)) as any
-    const kbtcBal = resp.free.toString()
-    const min1 = Number(resp.free) * 0.95 // TODO - add price in KSM for accurate min
+    return resp.free.toString()
+  }
+  const getKusdBal = async ()=>{
     const resp2 = (await api.query.tokens.accounts(address, kusd)) as any
-    const kusdBal = resp2.free.toString()
-    const min2 = Number(resp2.free) * 0.95 // TODO - add price in KSM for accurate min
+    return resp2.free.toString()
+  }
+
+  const swapAllForKsm = async () => {
+    const kbtcBal = await getKbtcBal()
+    // const min1 = Number(resp.free) * 0.95 // TODO - add price in KSM for accurate min
+    const kusdBal =await getKusdBal()
+    // const min2 = Number(resp2.free) * 0.95 // TODO - add price in KSM for accurate min
     const txns = [
       api.tx.dex.swapWithExactSupply([kbtc, kusd, ksm], kbtcBal, 0),
       api.tx.dex.swapWithExactSupply([kusd, ksm], kusdBal, 0),
     ]
-    const details = submitBatch(txns)
+    const details = await submitBatch(txns)
+    return details
+  }
+
+  const swapKsmForDexShare = async () => {
+    const ksmAmt = await getKsmFree()
+    const displayAmt = (ksmAmt).div(new FP(10**12))
+
+    process.stdout.write(`(2/3) Swapping ${(ksmAmt).div(new FP(10**12)).toString()} KSM for kBTC and aUSD...`)
+    ksmAmt.setPrecision(0)
+    const ksmAmount = ksmAmt.div(new FP(2))
+    const txs = [
+      api.tx.dex.swapWithExactSupply([ksm, lksm, kusd], ksmAmount.toString(), 0),
+      api.tx.dex.swapWithExactSupply([ksm, lksm, kusd, kbtc], ksmAmount.toString(), 0),
+    ]
+    const details = await submitBatch(txs)
+
     return details
   }
 
@@ -289,6 +313,16 @@ export const setupKarura = async () => {
     return details
   }
 
+  const depositLpShares = async () =>{
+      const kbtcBal = await getKbtcBal()
+      const kusdBal = await getKusdBal()
+
+      process.stdout.write(`(3/3) Deposting ${(new FP(kbtcBal)).div(new FP(10**8)).toString()} kBTC and ${(new FP(kusdBal)).div(new FP(10**12)).toString()} aUSD into vault...`)
+      const txn = api.tx.dex.addLiquidity(kusd,kbtc,kusdBal,kbtcBal,0,true)
+      const details = await submitTx(txn,signer)
+      return details
+  }
+
   const withdrawLpShares = async (shares: FixedPointNumber) => {
     const txns = [
       api.tx.incentives.withdrawDexShare({ DexShare: [kusd, kbtc] }, shares.toString()),
@@ -300,6 +334,7 @@ export const setupKarura = async () => {
 
   return {
     api,
+    depositLpShares,
     printStats,
     getKarBalance,
     getKsmFree,
@@ -324,6 +359,7 @@ export const setupKarura = async () => {
     swapAllKintForKsm,
     swapAllForKsm,
     swapKintForKsm,
+    swapKsmForDexShare,
     submitBatch,
     withdrawLpShares,
     getTotalDexShares,

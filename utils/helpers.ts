@@ -143,18 +143,19 @@ export const printIntro = () => {
 
 export const printChoices = () => {
   const string = colors.yellow(`Choices:
-  0.) Refresh:     Refresh this page.
+  
+  0.) Refresh:    Refresh this page.
 
-  1.) Self-Mint:   Submit kBTC issue request against your own vault whilst keeping 
-                   it shut to outsiders.
+  1.) Self-Mint:  Submit kBTC issue request against your own vault whilst keeping 
+                  it shut to outsiders.
 
-  2.) Harvest:     Harvest any KINT earnt as rewards, bridge to Karura to swap it for 
-                   KSM, bridge back to Kintsugi to deposit it as collateral.
+  2.) Harvest:    Harvest any KINT earnt as rewards, bridge to Karura to swap it for 
+                  KSM, bridge back to Kintsugi to deposit it as collateral.
 
-  3.) Rebalance:   Turn any aUSD/kBTC LP tokens directly into KSM and deposit it
-                   as additional vault collateral.
-                
-  4.) Quit
+  3.) Rebalance:  Manage your vault's collateral ratio by using aUSD/kBTC liquidity pool
+                  on Karura.
+
+  4.) Quit:       Leave with regret.
                 `)
   console.log(string)
 }
@@ -194,11 +195,11 @@ export const printDash = async () => {
     getKarStatsPrice('BTC'),
   ]).then((prices) => {
     const table = {
-      KSM: { CoinGeckoPrice: prices[0], 'Karura Stats Price': prices[1] },
-      KINT: { CoinGeckoPrice: prices[2], 'Karura Stats Price': prices[3] },
-      BTC: { CoinGeckoPrice: prices[4], 'Karura Stats Price': prices[5] },
+      KSM: { 'CoinGecko Price': prices[0], 'Karura Price': prices[1] },
+      KINT: { 'CoinGecko Price': prices[2], 'Karura Price': prices[3] },
+      BTC: { 'CoinGecko Price': prices[4], 'Karura Price': prices[5] },
     }
     console.table(table)
-    console.log(colors.random('\n==========================================================='))
+    console.log(colors.random('\n============================================================================'))
   })
 }

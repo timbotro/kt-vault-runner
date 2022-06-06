@@ -1,15 +1,31 @@
-## Description
-> :warning: Use at own risk, no responsibility taken for loss of funds!
->
-This is a collection of scripts for *Kintsugi Vault Operators* to better help them automate the process of maintaining the collateral levels of their vault.
+[![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+
+## Overview
+|Title| KT Vault Runner|
+|------|---------|
+|Hackathon|[amsterDOT Hack](https://dorahacks.io/hackathon/22/detail)|
+|Bounty Name|[Interlay: VAULT INTERFACE](https://github.com/interlay/bounties/issues/1) |
+|Summary| CLI application for Kintsugi Vault operators to automate tasks.|
+|Video Link| [youtube](http://www.youtube.com)|
+
+### Full Description
+The dream of Kintsugi is to have the most decentralized wrapped BTC token, that is fully insured by collateral. 
+To encourage decentralization, the network should attract high quantities of smaller vault operators (VOs), instead of a few whale accounts. 
+Smaller VOs, however, may not have the luxury of delegated funds and so will operate in a more self-interested fashion. 
+This CLI application is designed to service these VOs and help to manage exposures to multiple crypto assets.
+
+Second only to liveness, the VO's key responsibility is to manage the ratio between the value of the collateral versus the value of issued kBTC. 
+This means the monitoring the markets and reacting to the changing volatile price of not only KBTC but also the collateral asset (e.g. KSM).
+This application allows for full automation of: self-issuing, harvesting rewards and farming BTC. 
+The goal here is to make running small VOs far more attractive and thus increase network issuance whilst maintaining decentralization.
 
 
 ## Pre-requisites
-
-1. Kintsugi vault fully set up
-2. KINT balance in your vault
-3. Seed phrase of your vault
-4. (for some scripts) Free KAR balance on Karura chain
+1. Node version 18 and later
+2. Kintsugi vault fully set up
+3. KINT balance in your vault
+4. Seed phrase of your vault
+5. (for some scripts) Free KAR balance on Karura chain
 
 ## Installation
 1. Create a local seedphrase file somewhere on your filesystem: e.g. `mkdir ~/.private && touch ~/.private/seed.txt && vim ~/.private/seed.txt`
@@ -20,6 +36,7 @@ This is a collection of scripts for *Kintsugi Vault Operators* to better help th
 6. Install libraries with `yarn`
 
 ## Usage
+> :warning: Use at own risk, no responsibility taken for loss of funds!
 
 ```
 yarn start
@@ -31,7 +48,7 @@ yarn start
 - For self issuance workflow
 - For harvest & compound workflow
 - For rebalancing vault with LP
-- For targetted premium redeems: *COMING SOON*
+<!-- - For targetted premium redeems: *COMING SOON* -->
 
 Enjoy!
 
@@ -86,3 +103,6 @@ No. The current version uses many hardcoded values specifically for Kintsugi onl
 
 ### Will this work for vaults with non-KSM collaterals?
 No. However, no reason why this can't change in the future.
+
+### I love this project! How can I say thanks?
+Feel free to leave me a star, say thanks at timbotron@proton.me or send a donation to `5CG4HhBwRetoBVCgtW38MkkjYrfJehwu6Poe1qMQvHzmQzfk`

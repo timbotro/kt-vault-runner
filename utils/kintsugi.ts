@@ -31,6 +31,7 @@ export const setupKintsugi = async () => {
   }
   const blob = api.consts.system.version.toJSON() as any
   const ksmBtcVaultPrimitive = { accountId: address, currencies: tokenPair }
+  const ksmCurrencyPair = { collateral: { Token: 'KSM' }, wrapped: { Token: 'KBTC' } }
 
   const getVaultInfo = async () => {
     const resp = (await api.query.vaultRegistry.vaults(ksmBtcVaultPrimitive)).toJSON()
@@ -121,8 +122,6 @@ export const setupKintsugi = async () => {
     return collat
   }
 
-
-
   const getCollateralRatio = async (collateral: FixedPointNumber) => {
     const resp = (await api.query.vaultRegistry.vaults(ksmBtcVaultPrimitive)).toJSON()!
     const issued = (resp as any).issuedTokens + (resp as any).toBeIssuedTokens
@@ -173,6 +172,21 @@ export const setupKintsugi = async () => {
   const submitBatch = async (calls: any[]) => {
     const txn = api.tx.utility.batchAll(calls)
     const details = await submitTx(txn, signer)
+    return details
+  }
+
+  const withdrawCollateralAndBridge = async (number: number) => {
+    const requested = new FP(-number / 100)
+    const ratio = new FP(await getIssued()).mul(new FP(await getPrice()))
+    const amount = ratio.mul(requested)
+    const chainAmount = amount.mul(new FP(10 ** 12)).toString(0)
+    const txns = [
+      api.tx.vaultRegistry.withdrawCollateral(ksmCurrencyPair, chainAmount),
+      api.tx.xTokens.transfer(ksm, chainAmount, destinationKarura, 5000000000),
+    ]
+
+    process.stdout.write(`(1/4) Withdrawing and bridging ${amount.toNumber(5)} KSM from vault...`)
+    const details = submitBatch(txns)
     return details
   }
 
@@ -242,5 +256,6 @@ export const setupKintsugi = async () => {
     submitIssueRequest,
     submitBatch,
     printStats,
+    withdrawCollateralAndBridge,
   }
 }

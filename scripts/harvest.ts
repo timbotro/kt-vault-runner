@@ -3,7 +3,7 @@ import { setupKintsugi } from '../utils/kintsugi'
 import { setupKarura } from '../utils/karura'
 import { printSuccess } from '../utils/fetch'
 import { FixedPointNumber as FP } from '@acala-network/sdk-core'
-var rl = require('readline-sync');
+import { confirmMessage, harvestQ1, harvestQ2 } from '../utils/inquirer'
 
 export async function harvest() {
   const ktContext = await setupKintsugi()
@@ -14,20 +14,10 @@ export async function harvest() {
   const ksmHarvest = Number(kintHarvest) * Number(await karContext.getKsmKintPrice())
   await karContext.printStats(kintHarvest, ksmHarvest)
 
-  // const rl = readline.createInterface({ input, output })
-  const answer1 = await rl.question(
-    `Would you like to proceed with harvesting, bridging, swapping and depositing? (yes/no) `
-  )
-  switch (answer1) {
-    case 'yes':
-      break
-    case 'no':
-      console.log('Goodbye. 👋')
-      return
-      break
-    default:
-      console.error(`⚠️ Invalid yes/no response entered: ${answer1} \n Aborting.`)
-      throw new Error('Invalid user answer')
+  const answer1 = await harvestQ1()
+  if (!answer1.harvestIntro) {
+    console.log('Goodbye. 👋')
+    return
   }
 
   const ktAmount = await ktContext.getKintFree()
@@ -35,13 +25,8 @@ export async function harvest() {
     console.error(`Insufficient amount to bridge and convert, only ${kintHarvest + ktAmount} KINT free`)
     throw new Error('Insufficient harvest')
   }
-  const max = (Number(kintHarvest) + Number(ktAmount) - 1).toFixed(2)
-  const answer2 = await rl.question(
-    `How much KINT would you like to harvest and convert to KSM? (min:1 | max: ${max}) `
-  )
-  const amt = Number(answer2)
-  if (amt < 1) return console.error('Harvest amount entered too small')
-  if (amt > Number(max)) return console.error('Harvest amount exceeds maximum')
+  const max = (Number(kintHarvest) + Number(ktAmount) - 1)
+  const answer2 = await harvestQ2(max)
 
   console.log('=============================')
   process.stdout.write('(1/4) Claiming and Bridging rewards....')
@@ -51,7 +36,7 @@ export async function harvest() {
       const txn = ktContext.claimRewards()
       step1txns.push(txn)
     }
-    const bridgeAmount = new FP(amt, 12)
+    const bridgeAmount = new FP(answer2.harvestInput, 12)
     const txn = ktContext.bridgeToKarura(bridgeAmount)
     step1txns.push(txn)
     const hash = await ktContext.submitBatch(step1txns)
@@ -89,4 +74,5 @@ export async function harvest() {
   await printSuccess('kintsugi', hash5.hash)
 
   console.log(`✅  Collateral Ratio is now: ${await ktContext.getRatio()}%`)
+  await confirmMessage()
 }
