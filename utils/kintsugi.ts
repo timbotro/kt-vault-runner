@@ -185,7 +185,7 @@ export const setupKintsugi = async () => {
       api.tx.xTokens.transfer(ksm, chainAmount, destinationKarura, 5000000000),
     ]
 
-    process.stdout.write(`(1/4) Withdrawing and bridging ${amount.toNumber(5)} KSM from vault...`)
+    process.stdout.write(`(1/3) Withdrawing and bridging ${amount.toNumber(5)} KSM from vault...`)
     const details = submitBatch(txns)
     return details
   }
