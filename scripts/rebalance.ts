@@ -1,4 +1,4 @@
-import { sleep } from '../utils/helpers'
+import { sleep, waitForBalChange, parseSpecificResult } from '../utils/helpers'
 import { printSuccess } from '../utils/fetch'
 import { FixedPointNumber as FP } from '@acala-network/sdk-core'
 import { kar, ksm } from '../static/tokens'
@@ -30,14 +30,13 @@ export async function rebalance() {
       colors.green(`+${ratio.toNumber(2)}% `)
   )
 
-
   const answer1 = await rebalanceQ1()
   if (!answer1.rebalanceIntro) {
     console.log('Goodbye. 👋')
     return
   }
 
-  const answer2 = await rebalanceQ2(negRatio,ratio)
+  const answer2 = await rebalanceQ2(negRatio, ratio)
   const number = Number(answer2.rebalanceInput)
   console.log('=============================')
 
@@ -51,32 +50,46 @@ export async function rebalance() {
     const sharesToWithdraw = new FP(ksmValue.toNumber(0), 0).div(valPerShare)
 
     process.stdout.write(
-      `(1/4) Withdrawing ${sharesToWithdraw.div(new FP(10 ** 12)).toNumber(2)} staked LP shares ....`
+      `(1/4) Withdrawing ${sharesToWithdraw
+        .div(new FP(10 ** 12))
+        .toNumber(2)} staked LP shares ....`
     )
     const hash1 = await karContext.withdrawLpShares(sharesToWithdraw)
-    await printSuccess('kintsugi', hash1.hash)
+    await printSuccess('karura', hash1.hash)
+    const { results } = parseSpecificResult(hash1, 'currencies', 'Transferred')
+    const kusdReceived = new FP(results[1][3].toString())
+    const kbtcReceived = new FP(results[2][3].toString())
 
     process.stdout.write(`(2/4) Swapping withdrawn shares for KSM....`)
-    const hash2 = await karContext.swapAllForKsm()
+    const hash2 = await karContext.swapKusdKbtcforKsm(
+      kusdReceived,
+      kbtcReceived
+    )
     await printSuccess('karura', hash2.hash)
 
-    const bridgeBack = await karContext.getKsmFree()
-    process.stdout.write(`(3/4) Bridging back ${bridgeBack.div(new FP(10 ** 12)).toNumber(5)} KSM....`)
-    const hash3 = await karContext.bridgeAllKsmToKint()
-    await printSuccess('karura', hash3.hash)
-
-    await sleep(6000)
-    const ksmAmountOnKt = await ktContext.getKsmFree()
+    const initialKsmOnKt = await ktContext.getKsmFree()
     process.stdout.write(
-      `(4/4) Depositing ${ksmAmountOnKt.div(new FP(10 ** 12)).toNumber(5)} KSM Collateral back into vault...`
+      `(3/4) Bridging back ${hash2.returned
+        .div(new FP(10 ** 12))
+        .toNumber(5)} KSM....`
     )
-    const hash5 = await ktContext.depositCollateral(ksmAmountOnKt)
+    const hash3 = await karContext.bridgeKsmToKint(hash2.returned)
+    await printSuccess('karura', hash3.hash)
+    const diff = await waitForBalChange(initialKsmOnKt, ktContext.getKsmFree)
+    process.stdout.write(
+      `(4/4) Depositing ${diff
+        .div(new FP(10 ** 12))
+        .toNumber(5)} KSM Collateral back into vault...`
+    )
+    const hash5 = await ktContext.depositCollateral(diff)
     await printSuccess('kintsugi', hash5.hash)
+
   } else {
-    const hash1 = await ktContext.withdrawCollateralAndBridge(number)
+    const initialBal = await karContext.getKsmFree()
+    const hash1 = await ktContext.withdrawCollateralAndBridge(number, initialBal, karContext.getKsmFree)
     await printSuccess('kintsugi', hash1.hash)
 
-    const hash2 = await karContext.swapKsmForDexShare()
+    const hash2 = await karContext.swapKsmForDexShare(hash1.bridged)
     await printSuccess('karura', hash2.hash)
 
     const hash3 = await karContext.depositLpShares()

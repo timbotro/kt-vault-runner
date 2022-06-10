@@ -4,6 +4,10 @@ import { payments } from 'bitcoinjs-lib'
 import { harvest } from '../scripts/harvest'
 import { mint } from '../scripts/mint'
 import { rebalance } from '../scripts/rebalance'
+import {
+  FixedPointNumber as FP,
+  isLiquidCrowdloanName,
+} from '@acala-network/sdk-core'
 import { getCgPrice, getKarStatsPrice } from '../utils/fetch'
 var fs = require('sudo-fs-promise')
 var colors = require('colors')
@@ -34,6 +38,33 @@ export const setupKeys = async (api: ApiPromise) => {
 
 export async function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms))
+}
+
+export const parseSwappedResult = (resp) => {
+  let issueJson
+  let events = ''
+  resp.events.forEach(({ phase, event: { data, method, section } }) => {
+    events = events.concat(`\n\t${phase}: ${section}.${method}::${data}`)
+    if (section == 'dex' && method == 'Swap') issueJson = data
+  })
+  events.concat('\n')
+  const liqChanges = issueJson[2]
+  const amt = liqChanges[liqChanges.length - 1]
+  const amount = new FP(amt.toString())
+
+  return { amount, events }
+}
+
+export const parseSpecificResult = (resp, module, call) => {
+  let events = ''
+  let results: any[] = []
+  resp.events.forEach(({ phase, event: { data, method, section } }) => {
+    events = events.concat(`\n\t${phase}: ${section}.${method}::${data}`)
+    if (section == module && method == call) results.push(data)
+  })
+  events.concat('\n')
+
+  return { results, events }
 }
 
 export const parseResponse = (resp) => {
@@ -212,9 +243,9 @@ export const printDash = async () => {
     getKarStatsPrice('BTC'),
   ]).then((prices) => {
     const table = {
-      KSM: { 'CoinGecko Price': prices[0], 'Karura Price': prices[1] },
-      KINT: { 'CoinGecko Price': prices[2], 'Karura Price': prices[3] },
-      BTC: { 'CoinGecko Price': prices[4], 'Karura Price': prices[5] },
+      KSM: { CoinGecko: Number(prices[0]), 'Karura SubQL': Number(prices[1]) },
+      KINT: { CoinGecko: Number(prices[2]), 'Karura SubQL': Number(prices[3]) },
+      BTC: { CoinGecko: Number(prices[4]), 'Karura SubQL': Number(prices[5]) },
     }
     console.table(table)
     console.log(
@@ -223,4 +254,25 @@ export const printDash = async () => {
       )
     )
   })
+}
+
+export const waitForBalChange = async (
+  initialBal: FP,
+  balCall,
+  verbose = false
+) => {
+  let loops1 = 0
+  let difference
+  while (loops1 <= 12) {
+    const currentBal = await balCall()
+    if (currentBal.isGreaterThan(initialBal)) {
+      difference = currentBal.sub(initialBal)
+      break
+    }
+    await sleep(1000)
+    loops1++
+  }
+  if (verbose)
+    console.log(`⏱ Waited ${loops1} seconds for bridge txn to propagate`)
+  return difference
 }
