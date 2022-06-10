@@ -176,7 +176,7 @@ export const setupKintsugi = async () => {
   }
 
   const withdrawCollateralAndBridge = async (number: number, initialBal: FP, balCheck) => {
-    const requested = new FP(-number / 100)
+    const requested = new FP((number) / 100)
     const ratio = new FP(await getIssued()).mul(new FP(await getPrice()))
     const amount = ratio.mul(requested)
     const chainAmount = amount.mul(new FP(10 ** 12)).toString(0)
