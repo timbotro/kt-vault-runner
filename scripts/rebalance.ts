@@ -86,7 +86,7 @@ export async function rebalance() {
 
   } else {
     const initialBal = await karContext.getKsmFree()
-    const hash1 = await ktContext.withdrawCollateralAndBridge(number, initialBal, karContext.getKsmFree)
+    const hash1 = await ktContext.withdrawCollateralAndBridge(-number, initialBal, karContext.getKsmFree)
     await printSuccess('kintsugi', hash1.hash)
 
     const hash2 = await karContext.swapKsmForDexShare(hash1.bridged)
