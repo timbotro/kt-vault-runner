@@ -365,7 +365,6 @@ export const setupKarura = async () => {
     ]
     const details = await submitBatch(txns)
     const {results} = parseSpecificResult(details, 'dex', 'Swap')
-    console.log(JSON.stringify(results))
     const total = new FP(
       results[0][2][results[0][2].length - 1].toString()
     ).add(new FP(results[1][2][results[1][2].length - 1].toString()))

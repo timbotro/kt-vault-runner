@@ -167,7 +167,7 @@ export const printIntro = () => {
 
   string = string.concat(
     colors
-      .green(
+      .rainbow(
         `
  ============================ KT VAULT RUNNER ==============================`
       )
