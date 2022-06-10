@@ -3,7 +3,7 @@ import { ApiPromise, WsProvider } from '@polkadot/api'
 import Big from 'big.js'
 import { FixedPointNumber, FixedPointNumber as FP } from '@acala-network/sdk-core'
 import { kusd, kint, ksm, kbtc, kar } from '../static/tokens'
-import { setupKeys, printPercentages, submitTx } from './helpers'
+import { setupKeys, printPercentages, submitTx, waitForBalChange } from './helpers'
 
 export const setupKintsugi = async () => {
   const tokenPair = { collateral: ksm, wrapped: kbtc }
@@ -175,7 +175,7 @@ export const setupKintsugi = async () => {
     return details
   }
 
-  const withdrawCollateralAndBridge = async (number: number) => {
+  const withdrawCollateralAndBridge = async (number: number, initialBal: FP, balCheck) => {
     const requested = new FP(-number / 100)
     const ratio = new FP(await getIssued()).mul(new FP(await getPrice()))
     const amount = ratio.mul(requested)
@@ -186,7 +186,10 @@ export const setupKintsugi = async () => {
     ]
 
     process.stdout.write(`(1/3) Withdrawing and bridging ${amount.toNumber(5)} KSM from vault...`)
-    const details = submitBatch(txns)
+    const details = await submitBatch(txns)
+
+    const diff = await waitForBalChange(initialBal,balCheck)
+    details.bridged = diff
     return details
   }
 
