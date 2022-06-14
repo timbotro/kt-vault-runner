@@ -262,17 +262,20 @@ export const waitForBalChange = async (
   verbose = false
 ) => {
   let loops1 = 0
+  const maxLoops = 60
   let difference
-  while (loops1 <= 12) {
+  while (loops1 <= maxLoops) {
     const currentBal = await balCall()
     if (currentBal.isGreaterThan(initialBal)) {
       difference = currentBal.sub(initialBal)
-      break
+      return difference
     }
     await sleep(1000)
     loops1++
   }
   if (verbose)
     console.log(`⏱ Waited ${loops1} seconds for bridge txn to propagate`)
-  return difference
+
+  console.error(`Change in balance not detected in ${maxLoops}s. Please investigate by looking at above extrinsics on chain explorers.`)
+  throw new Error("No Balance change detected")
 }
