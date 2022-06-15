@@ -39,6 +39,8 @@ The goal here is to make running small VOs far more attractive and thus increase
 ## Usage
 > :warning: Use at own risk, no responsibility taken for loss of funds!
 
+> :warning: When WSS RPC endpoints get busy/slow, this will naturally affect the flows on this CLI app. For the time being, you should change the .env RPC if you are finding poor performance with this application.
+
 ```
 yarn start
 ```
