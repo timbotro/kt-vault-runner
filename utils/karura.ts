@@ -1,6 +1,7 @@
 import 'dotenv/config'
 import { ApiPromise, WsProvider, Keyring } from '@polkadot/api'
 import { getCgPrice } from '../utils/fetch'
+import {getKarApi} from "../utils/api"
 import { options } from '@acala-network/api'
 import {
   FixedPointNumber,
@@ -32,9 +33,11 @@ export const kusamaApi = async () => {
 }
 
 export const setupKarura = async () => {
-  const wsProvider = new WsProvider('wss://karura-rpc-1.aca-api.network')
-  const api = await ApiPromise.create(options({ provider: wsProvider }))
-  await api.isReady
+  // const wsProvider = new WsProvider('wss://karura-rpc-1.aca-api.network')
+  // const api = await ApiPromise.create(options({ provider: wsProvider }))
+  // await api.isReady
+
+  const api = (await getKarApi())!
 
   const { signer, address } = await setupKeys(api)
 
