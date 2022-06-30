@@ -1,12 +1,9 @@
-import { printDash, printIntro, chooser } from './utils/helpers'
+import { chooser, runInit } from './utils/helpers'
 import { mainMenu } from './utils/inquirer'
-import clear from 'clear'
 
 async function main() {
+  await runInit()
   while (true) {
-    clear()
-    printIntro()
-    await printDash()
     const answer = await mainMenu()
     if (await chooser(answer.menuChoice)) break
   }

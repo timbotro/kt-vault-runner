@@ -6,6 +6,7 @@ import {
   FixedPointNumber as FP,
 } from '@acala-network/sdk-core'
 import { kusd, kint, ksm, kbtc, kar } from '../static/tokens'
+import { getKintApi } from './api'
 import {
   setupKeys,
   printPercentages,
@@ -17,9 +18,10 @@ import { request } from 'http'
 export const setupKintsugi = async () => {
   const tokenPair = { collateral: ksm, wrapped: kbtc }
 
-  const provider = new WsProvider(process.env.WSS_URI)
-  const api = await ApiPromise.create({ provider })
-  await api.isReady
+  // const provider = new WsProvider(process.env.WSS_URI)
+  // const api = await ApiPromise.create({ provider })
+  // await api.isReady
+  const api = (await getKintApi())!
 
   const { address, signer } = await setupKeys(api)
 
@@ -235,18 +237,13 @@ export const setupKintsugi = async () => {
   ) => {
     const requested = new FP(number / 100, 0)
     const ratio = new FP(await getIssued()).mul(new FP(await getPrice()))
-    const amount = requested.mul(new FP(10 ** 12)).mul(ratio).toChainData()
+    const amount = requested
+      .mul(new FP(10 ** 12))
+      .mul(ratio)
+      .toChainData()
     const txns = [
-      api.tx.vaultRegistry.withdrawCollateral(
-        ksmCurrencyPair,
-        amount
-      ),
-      api.tx.xTokens.transfer(
-        ksm,
-        amount,
-        destinationKarura,
-        5000000000
-      ),
+      api.tx.vaultRegistry.withdrawCollateral(ksmCurrencyPair, amount),
+      api.tx.xTokens.transfer(ksm, amount, destinationKarura, 5000000000),
     ]
 
     process.stdout.write(

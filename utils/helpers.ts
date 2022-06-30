@@ -1,8 +1,10 @@
 import 'dotenv/config'
 import { ApiPromise, Keyring } from '@polkadot/api'
 import { payments } from 'bitcoinjs-lib'
+import { getKintApi, getKarApi, getKarLatencies, switchWss, getKintLatencies } from './api'
 import { harvest } from '../scripts/harvest'
 import { mint } from '../scripts/mint'
+import clear from 'clear'
 import { rebalance } from '../scripts/rebalance'
 import {
   FixedPointNumber as FP,
@@ -38,6 +40,35 @@ export const setupKeys = async (api: ApiPromise) => {
 
 export async function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms))
+}
+
+export async function runInit() {
+  console.log('Running speed tests on available RPCs....')
+  console.log('=========================================')
+  await getKintApi()
+  await getKarApi()
+  const karResults = await getKarLatencies()
+  const karLatencies = await selectFastest(karResults)
+  const kintResults = await getKintLatencies()
+  const kintLatencies = await selectFastest(kintResults)
+  const latencies = kintLatencies.concat(karLatencies)
+
+  clear()
+  printIntro()
+  await printDash(latencies)
+}
+
+export async function speedTest(){
+
+}
+async function selectFastest(results) {
+  const fastest = results.reduce((prev, curr) => {
+    return prev['Latency (ms)'] < curr['Latency (ms)'] ? prev : curr
+  })
+  const index = results.indexOf(fastest)
+  await switchWss(index,fastest.Network)
+  results[index].Selected = true
+  return results
 }
 
 export const parseSwappedResult = (resp) => {
@@ -210,6 +241,7 @@ export const chooser = async (answer) => {
   const number = Number(answer)
   switch (number) {
     case 0:
+      await runInit()
       break
     case 1:
       await mint()
@@ -233,7 +265,7 @@ export const chooser = async (answer) => {
   return false
 }
 
-export const printDash = async () => {
+export const printDash = async (latencies) => {
   await Promise.all([
     getCgPrice('kusama'),
     getKarStatsPrice('KSM'),
@@ -248,6 +280,7 @@ export const printDash = async () => {
       BTC: { CoinGecko: Number(prices[4]), 'Karura SubQL': Number(prices[5]) },
     }
     console.table(table)
+    console.table(latencies)
     console.log(
       colors.random(
         '\n============================================================================'
@@ -276,6 +309,8 @@ export const waitForBalChange = async (
   if (verbose)
     console.log(`⏱ Waited ${loops1} seconds for bridge txn to propagate`)
 
-  console.error(`Change in balance not detected in ${maxLoops}s. Please investigate by looking at above extrinsics on chain explorers.`)
-  throw new Error("No Balance change detected")
+  console.error(
+    `Change in balance not detected in ${maxLoops}s. Please investigate by looking at above extrinsics on chain explorers.`
+  )
+  throw new Error('No Balance change detected')
 }
