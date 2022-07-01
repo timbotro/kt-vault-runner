@@ -2,7 +2,6 @@ const cgUri = 'https://api.coingecko.com/api/v3'
 const karUri = 'https://api.polkawallet.io/price-server/'
 var shortUrl = require('node-url-shortener')
 import { FixedPointNumber as FP } from '@acala-network/sdk-core'
-import { nToBigInt } from '@polkadot/util'
 
 export const getCgPrice = async (asset: string) => {
   try {

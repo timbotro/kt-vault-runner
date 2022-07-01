@@ -30,7 +30,7 @@ export class SubstrateApi {
 
   public async init(options: ApiOptions) {
     await this.connect(options)
-    await this._api?.isReady
+    await this._api?.isReadyOrError
     return this
   }
 
@@ -45,7 +45,7 @@ export class SubstrateApi {
   public async measure(options: ApiOptions) {
     const startTime = performance.now()
     await this.connect(options)
-    // await this._api?.isReady
+    await this._api?.isReady
     const endTime = performance.now()
     const duration = endTime - startTime
     await this._api?.disconnect()
@@ -82,20 +82,44 @@ export async function switchWss(prov: number, network: Chains) {
 }
 
 export async function getKarLatencies() {
-  const latencies: any[] = []
+  let latencies: any[] = []
+  let promises = []
 
   for (let i = 0; i < karuraWss.length; i++) {
-    const provider = chooseWss('Karura', i)
-    const latency = await karApi.measure({ provider: provider })
-    const row = {
-      Network: 'Karura',
-      WSS: karuraWss[i],
-      'Latency (ms)': Number(latency),
-      Selected: false,
-    }
-    latencies.push(row)
+    const promise = new Promise(async (resolve, reject) => {
+      const provider = chooseWss('Karura', i)
+      const startTime = performance.now()
+      const api = await ApiPromise.create({ provider })
+      switch (true) {
+        case api.isConnected: {
+          const duration = performance.now() - startTime
+          const row = {
+            Network: 'Karura',
+            WSS: karuraWss[i],
+            'Latency (ms)': Number(duration.toFixed(0)),
+            Selected: false,
+          }
+          latencies.push(row)
+          api.disconnect()
+          resolve(duration)
+          break
+        }
+        case performance.now() == startTime + Number(5000): {
+          console.error('Timed out')
+          reject(5000)
+          break
+        }
+        default:
+          throw new Error('RPC measure error')
+      }
+    })
+    //@ts-ignore
+    promises.push(promise)
   }
 
+  await Promise.all(promises).then(() => {
+    console.log('Karura Benchmark Complete')
+  })
   return latencies
 }
 
@@ -103,7 +127,7 @@ export async function getKintLatencies() {
   const latencies: any[] = []
 
   for (let i = 0; i < kintsugiWss.length; i++) {
-    const provider = chooseWss('Kintsugi', i)
+    const provider = chooseWss('Kintsugi', i, false)
     const latency = await kintApi.measure({ provider: provider })
     const row = {
       Network: 'Kintsugi',
@@ -139,7 +163,11 @@ export async function getKintApi() {
   return kintApi.api
 }
 
-function chooseWss(network: Chains, number: number = 0) {
+function chooseWss(
+  network: Chains,
+  number: number = 0,
+  retry: false | number = 5000
+) {
   switch (network) {
     case 'Karura':
       return new WsProvider(karuraWss[number])

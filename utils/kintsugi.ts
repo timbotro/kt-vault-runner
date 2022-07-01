@@ -1,5 +1,4 @@
 import 'dotenv/config'
-import { ApiPromise, WsProvider } from '@polkadot/api'
 import Big from 'big.js'
 import {
   FixedPointNumber,
@@ -13,7 +12,6 @@ import {
   submitTx,
   waitForBalChange,
 } from './helpers'
-import { request } from 'http'
 
 export const setupKintsugi = async () => {
   const tokenPair = { collateral: ksm, wrapped: kbtc }

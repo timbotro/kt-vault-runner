@@ -66,7 +66,9 @@ async function selectFastest(results) {
     return prev['Latency (ms)'] < curr['Latency (ms)'] ? prev : curr
   })
   const index = results.indexOf(fastest)
-  await switchWss(index,fastest.Network)
+  if (fastest.Network == "Karura") await getKarApi(index)
+  // if (fastest.Network == "Kintsugi") await getKintApi(index)
+  // await switchWss(index,fastest.Network)
   results[index].Selected = true
   return results
 }

@@ -1,7 +1,6 @@
 import { sleep, waitForBalChange, parseSpecificResult } from '../utils/helpers'
 import { printSuccess } from '../utils/fetch'
 import { FixedPointNumber as FP } from '@acala-network/sdk-core'
-import { kar, ksm } from '../static/tokens'
 import { setupKintsugi } from '../utils/kintsugi'
 import { setupKarura } from '../utils/karura'
 import { rebalanceQ1, rebalanceQ2, confirmMessage } from '../utils/inquirer'

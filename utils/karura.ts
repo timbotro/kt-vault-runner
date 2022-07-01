@@ -1,8 +1,6 @@
 import 'dotenv/config'
-import { ApiPromise, WsProvider, Keyring } from '@polkadot/api'
 import { getCgPrice } from '../utils/fetch'
 import {getKarApi} from "../utils/api"
-import { options } from '@acala-network/api'
 import {
   FixedPointNumber,
   FixedPointNumber as FP,
@@ -22,21 +20,8 @@ import {
   parseSpecificResult,
   submitTx,
 } from './helpers'
-import { sign } from 'crypto'
-
-export const kusamaApi = async () => {
-  const wsProvider = new WsProvider('wss://kusama.api.onfinality.io/public-ws')
-  const api = await ApiPromise.create({ provider: wsProvider })
-  await api.isReady
-
-  return { api }
-}
 
 export const setupKarura = async () => {
-  // const wsProvider = new WsProvider('wss://karura-rpc-1.aca-api.network')
-  // const api = await ApiPromise.create(options({ provider: wsProvider }))
-  // await api.isReady
-
   const api = (await getKarApi())!
 
   const { signer, address } = await setupKeys(api)
