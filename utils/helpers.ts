@@ -46,7 +46,7 @@ export async function runInit() {
   console.log('Running speed tests on available RPCs....')
   console.log('=========================================')
   await getKintApi()
-  await getKarApi()
+  // await getKarApi()
   const karResults = await getKarLatencies()
   const karLatencies = await selectFastest(karResults)
   const kintResults = await getKintLatencies()

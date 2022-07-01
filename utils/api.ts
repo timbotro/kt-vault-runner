@@ -87,39 +87,53 @@ export async function getKarLatencies() {
 
   for (let i = 0; i < karuraWss.length; i++) {
     const promise = new Promise(async (resolve, reject) => {
-      const provider = chooseWss('Karura', i)
       const startTime = performance.now()
-      const api = await ApiPromise.create({ provider })
-      switch (true) {
-        case api.isConnected: {
-          const duration = performance.now() - startTime
-          const row = {
-            Network: 'Karura',
-            WSS: karuraWss[i],
-            'Latency (ms)': Number(duration.toFixed(0)),
-            Selected: false,
-          }
-          latencies.push(row)
-          api.disconnect()
-          resolve(duration)
-          break
+      // const provider = chooseWss('Karura', i)
+      const provider =  new WsProvider(
+        karuraWss[i],
+        undefined,
+        undefined,
+        undefined
+      )
+
+      provider.on('connected', async () => {
+        const api = await ApiPromise.create({ provider })
+        const duration = performance.now() - startTime
+        const row = {
+          Network: 'Karura',
+          WSS: karuraWss[i],
+          'Latency (ms)': Number(duration.toFixed(0)),
+          Selected: false,
         }
-        case performance.now() == startTime + Number(5000): {
-          console.error('Timed out')
-          reject(5000)
-          break
+        latencies.push(row)
+        await api.disconnect()
+        resolve(true)
+      })
+
+      provider.on('error', async () => {
+        console.error(`Error connecting to ${karuraWss[i]}`)
+        const row = {
+          Network: 'Karura',
+          WSS: karuraWss[i],
+          'Latency (ms)': Number(9999),
+          Selected: false,
         }
-        default:
-          throw new Error('RPC measure error')
-      }
+        latencies.push(row)
+        await provider.disconnect()
+        reject(false)
+      })
     })
     //@ts-ignore
     promises.push(promise)
   }
 
-  await Promise.all(promises).then(() => {
-    console.log('Karura Benchmark Complete')
-  })
+  await Promise.any(promises)
+    .then(() => {
+      console.log('Karura Benchmark Complete')
+    })
+    .catch(() => {
+      console.error('One of the RPCs have failed')
+    })
   return latencies
 }
 
