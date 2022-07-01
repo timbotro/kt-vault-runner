@@ -3,9 +3,6 @@ import { ApiDecoration, ApiOptions } from '@polkadot/api/types'
 import { options } from '@acala-network/api'
 import { Hash } from '@polkadot/types/interfaces'
 import { performance } from 'perf_hooks'
-import { start } from 'repl'
-import { deflate } from 'zlib'
-import { kStringMaxLength } from 'buffer'
 
 type Chains = 'Karura' | 'Kintsugi'
 
@@ -81,27 +78,34 @@ export async function switchWss(prov: number, network: Chains) {
   }
 }
 
-export async function getKarLatencies() {
+export async function getLatencies(network: Chains) {
   let latencies: any[] = []
   let promises = []
+  let wssList
+  switch (network) {
+    case 'Karura':
+      wssList = karuraWss
+      break
+    case 'Kintsugi':
+      wssList = kintsugiWss
+      break
+    default:
+      throw new Error('Unrecognised')
+  }
 
-  for (let i = 0; i < karuraWss.length; i++) {
+  for (let i = 0; i < wssList.length; i++) {
     const promise = new Promise(async (resolve, reject) => {
       const startTime = performance.now()
-      // const provider = chooseWss('Karura', i)
-      const provider =  new WsProvider(
-        karuraWss[i],
-        undefined,
-        undefined,
-        undefined
+      const provider = new WsProvider(
+        wssList[i]
       )
 
       provider.on('connected', async () => {
         const api = await ApiPromise.create({ provider })
         const duration = performance.now() - startTime
         const row = {
-          Network: 'Karura',
-          WSS: karuraWss[i],
+          Network: network,
+          WSS: wssList[i],
           'Latency (ms)': Number(duration.toFixed(0)),
           Selected: false,
         }
@@ -111,10 +115,10 @@ export async function getKarLatencies() {
       })
 
       provider.on('error', async () => {
-        console.error(`Error connecting to ${karuraWss[i]}`)
+        console.error(`Error connecting to ${wssList[i]}`)
         const row = {
-          Network: 'Karura',
-          WSS: karuraWss[i],
+          Network: network,
+          WSS: wssList[i],
           'Latency (ms)': Number(9999),
           Selected: false,
         }
@@ -127,9 +131,9 @@ export async function getKarLatencies() {
     promises.push(promise)
   }
 
-  await Promise.any(promises)
+  await Promise.allSettled(promises)
     .then(() => {
-      console.log('Karura Benchmark Complete')
+      console.log(`${network} Benchmark Complete`)
     })
     .catch(() => {
       console.error('One of the RPCs have failed')
@@ -137,27 +141,115 @@ export async function getKarLatencies() {
   return latencies
 }
 
-export async function getKintLatencies() {
-  const latencies: any[] = []
+// export async function getKarLatencies() {
+//   let latencies: any[] = []
+//   let promises = []
 
-  for (let i = 0; i < kintsugiWss.length; i++) {
-    const provider = chooseWss('Kintsugi', i, false)
-    const latency = await kintApi.measure({ provider: provider })
-    const row = {
-      Network: 'Kintsugi',
-      WSS: kintsugiWss[i],
-      'Latency (ms)': Number(latency),
-      Selected: false,
-    }
-    latencies.push(row)
-  }
+//   for (let i = 0; i < karuraWss.length; i++) {
+//     const promise = new Promise(async (resolve, reject) => {
+//       const startTime = performance.now()
+//       // const provider = chooseWss('Karura', i)
+//       const provider = new WsProvider(
+//         karuraWss[i],
+//         undefined,
+//         undefined,
+//         undefined
+//       )
 
-  return latencies
-}
+//       provider.on('connected', async () => {
+//         const api = await ApiPromise.create({ provider })
+//         const duration = performance.now() - startTime
+//         const row = {
+//           Network: 'Karura',
+//           WSS: karuraWss[i],
+//           'Latency (ms)': Number(duration.toFixed(0)),
+//           Selected: false,
+//         }
+//         latencies.push(row)
+//         await api.disconnect()
+//         resolve(true)
+//       })
+
+//       provider.on('error', async () => {
+//         console.error(`Error connecting to ${karuraWss[i]}`)
+//         const row = {
+//           Network: 'Karura',
+//           WSS: karuraWss[i],
+//           'Latency (ms)': Number(9999),
+//           Selected: false,
+//         }
+//         latencies.push(row)
+//         await provider.disconnect()
+//         reject(false)
+//       })
+//     })
+//     //@ts-ignore
+//     promises.push(promise)
+//   }
+
+//   await Promise.any(promises)
+//     .then(() => {
+//       console.log('Karura Benchmark Complete')
+//     })
+//     .catch(() => {
+//       console.error('One of the RPCs have failed')
+//     })
+//   return latencies
+// }
+
+// export async function getKintLatencies() {
+//   let latencies: any[] = []
+//   let promises = []
+
+//   for (let i = 0; i < kintsugiWss.length; i++) {
+//     const promise = new Promise(async (resolve, reject) => {
+//       const startTime = performance.now()
+//       const provider = new WsProvider(kintsugiWss[i])
+
+//       provider.on('connected', async () => {
+//         const api = await ApiPromise.create({ provider })
+//         const duration = performance.now() - startTime
+//         const row = {
+//           Network: 'Kintsugi',
+//           WSS: kintsugiWss[i],
+//           'Latency (ms)': Number(duration.toFixed(0)),
+//           Selected: false,
+//         }
+//         latencies.push(row)
+//         await api.disconnect()
+//         resolve(true)
+//       })
+
+//       provider.on('error', async () => {
+//         console.error(`Error connecting to ${kintsugiWss[i]}`)
+//         const row = {
+//           Network: 'Kintsugi',
+//           WSS: kintsugiWss[i],
+//           'Latency (ms)': Number(9999),
+//           Selected: false,
+//         }
+//         latencies.push(row)
+//         await provider.disconnect()
+//         reject(false)
+//       })
+//     })
+//     //@ts-ignore
+//     promises.push(promise)
+//   }
+
+//   await Promise.any(promises)
+//     .then(() => {
+//       console.log('Kintsugi Benchmark Complete')
+//     })
+//     .catch(() => {
+//       console.error('One of the RPCs have failed')
+//     })
+//   return latencies
+// }
 
 export async function getKarApi(endpoint: number = 0) {
   if (!karApi) {
-    const provider = chooseWss('Karura', 0)
+    const provider = chooseWss('Karura', endpoint)
     karApi = await new SubstrateApi().init({
       provider: provider,
     })
@@ -166,9 +258,9 @@ export async function getKarApi(endpoint: number = 0) {
   return karApi.api
 }
 
-export async function getKintApi() {
+export async function getKintApi(endpoint: number = 0) {
   if (!kintApi) {
-    const provider = chooseWss('Kintsugi', 0)
+    const provider = chooseWss('Kintsugi', endpoint)
     kintApi = await new SubstrateApi().init({
       provider: provider,
     })

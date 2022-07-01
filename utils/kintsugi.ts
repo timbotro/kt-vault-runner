@@ -15,10 +15,6 @@ import {
 
 export const setupKintsugi = async () => {
   const tokenPair = { collateral: ksm, wrapped: kbtc }
-
-  // const provider = new WsProvider(process.env.WSS_URI)
-  // const api = await ApiPromise.create({ provider })
-  // await api.isReady
   const api = (await getKintApi())!
 
   const { address, signer } = await setupKeys(api)

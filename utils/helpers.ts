@@ -1,15 +1,12 @@
 import 'dotenv/config'
 import { ApiPromise, Keyring } from '@polkadot/api'
 import { payments } from 'bitcoinjs-lib'
-import { getKintApi, getKarApi, getKarLatencies, switchWss, getKintLatencies } from './api'
+import { getKintApi, getKarApi, getLatencies } from './api'
 import { harvest } from '../scripts/harvest'
 import { mint } from '../scripts/mint'
 import clear from 'clear'
 import { rebalance } from '../scripts/rebalance'
-import {
-  FixedPointNumber as FP,
-  isLiquidCrowdloanName,
-} from '@acala-network/sdk-core'
+import { FixedPointNumber as FP } from '@acala-network/sdk-core'
 import { getCgPrice, getKarStatsPrice } from '../utils/fetch'
 var fs = require('sudo-fs-promise')
 var colors = require('colors')
@@ -45,29 +42,27 @@ export async function sleep(ms: number): Promise<void> {
 export async function runInit() {
   console.log('Running speed tests on available RPCs....')
   console.log('=========================================')
-  await getKintApi()
-  // await getKarApi()
-  const karResults = await getKarLatencies()
+  // const karResults = await getKarLatencies()
+  const karResults = await getLatencies('Karura')
   const karLatencies = await selectFastest(karResults)
-  const kintResults = await getKintLatencies()
+  // const kintResults = await getKintLatencies()
+  const kintResults = await getLatencies('Kintsugi')
   const kintLatencies = await selectFastest(kintResults)
-  const latencies = kintLatencies.concat(karLatencies)
+  const latencies = karLatencies.concat(kintLatencies)
 
   clear()
   printIntro()
   await printDash(latencies)
 }
 
-export async function speedTest(){
-
-}
+export async function speedTest() {}
 async function selectFastest(results) {
   const fastest = results.reduce((prev, curr) => {
     return prev['Latency (ms)'] < curr['Latency (ms)'] ? prev : curr
   })
   const index = results.indexOf(fastest)
-  if (fastest.Network == "Karura") await getKarApi(index)
-  // if (fastest.Network == "Kintsugi") await getKintApi(index)
+  if (fastest.Network == 'Karura') await getKarApi(index)
+  if (fastest.Network == 'Kintsugi') await getKintApi(index)
   // await switchWss(index,fastest.Network)
   results[index].Selected = true
   return results
