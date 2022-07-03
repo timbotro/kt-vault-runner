@@ -125,8 +125,14 @@ export const submitTx = async (tx, signer) => {
           console.log(
             `Txns in unfinalized block: ${status.asInBlock} waiting...`
           )
-        if (status.isDropped) reject('Block has been dropped!')
-        if (status.isFinalized) resolve({ events, hash: status.asFinalized })
+        if (status.isDropped) {
+          unsub()
+          reject('Block has been dropped!')
+        }
+        if (status.isFinalized) {
+          unsub()
+          resolve({ events, hash: status.asFinalized })
+        }
       }
     )
   })
