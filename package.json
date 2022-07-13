@@ -33,5 +33,6 @@
   },
   "overrides": {
     "async": ">=2.6.5"
-  }
+  },
+  "packageManager": "yarn@3.2.1"
 }
