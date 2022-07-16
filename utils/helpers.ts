@@ -8,6 +8,7 @@ import clear from 'clear'
 import { rebalance } from '../scripts/rebalance'
 import { FixedPointNumber as FP } from '@acala-network/sdk-core'
 import { getCgPrice, getKarStatsPrice } from '../utils/fetch'
+import { createImportSpecifier } from 'typescript'
 var fs = require('sudo-fs-promise')
 var colors = require('colors')
 
@@ -126,12 +127,12 @@ export const submitTx = async (tx, signer) => {
             `Txns in unfinalized block: ${status.asInBlock} waiting...`
           )
         if (status.isDropped) {
-          unsub()
           reject('Block has been dropped!')
+          unsub()
         }
         if (status.isFinalized) {
-          unsub()
           resolve({ events, hash: status.asFinalized })
+          unsub()
         }
       }
     )

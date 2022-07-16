@@ -33,23 +33,25 @@ export const getKarStatsPrice = async (asset: string) => {
 export const printSuccess = async (network: string, hash: string) => {
   const string = `https://${network}.subscan.io/block/${hash}`
 
-  let promise = new Promise(async (resolve, reject) => {
-    try {
-      shortUrl.short(string, function (err, url) {
-        resolve(url)
-      })
-    } catch (e) {
-      reject(e)
-    }
-  })
+  // let promise = new Promise(async (resolve, reject) => {
+  //   try {
+  //     shortUrl.short(string, function (err, url) {
+  //       resolve(url)
+  //     })
+  //   } catch (e) {
+  //     reject(e)
+  //   }
+  // })
 
-  await promise
-    .then((message) => {
-      console.log(`Done: ${message} ✅ `)
-    })
-    .catch((message) => {
-      console.error('Cannot shorten URL link', message)
-    })
+  // await promise
+  //   .then((message) => {
+  //     console.log(`Done: ${message} ✅ `)
+  //   })
+  //   .catch((message) => {
+  //     console.error('Cannot shorten URL link', message)
+    // })
+
+    console.log(`Done: ${string} ✅ `)
 }
 
 async function main() {
